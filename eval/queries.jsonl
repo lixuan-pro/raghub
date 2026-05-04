@@ -1,0 +1,2 @@
+﻿{"id": "q1", "query": "项目当前支持哪些接口？", "expected_answer": "当前支持 /health 和 /version 接口。", "source": "manual", "note": "week1 placeholder"}
+{"id": "q2", "query": "项目当前版本是多少？", "expected_answer": "0.1.0", "source": "manual", "note": "week1 placeholder"}
