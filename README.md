@@ -2,20 +2,22 @@
 
 RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步完成文档导入、文本切块、检索召回、问答生成与评测展示的完整链路。
 
-当前项目处于 Week 1：工程骨架与基础设施阶段。
+当前项目已完成 Week 1 工程骨架收口，并进入 Week 2：文档导入阶段。
 
 ## Current Stage
 
-当前阶段目标是先搭建一个稳定的 FastAPI 后端工程骨架，做到：
+当前阶段目标是从最小输入链路开始，先完成本地 TXT 文档读取能力。
 
-- 服务可以启动
-- 基础接口可以访问
-- 配置可以集中管理
-- 日志可以正常输出
-- 测试可以自动运行
-- 代码可以提交到 GitHub
+当前已经完成：
 
-当前暂不进入 TXT/PDF 文档导入、文本切块、向量检索和 `/chat` 问答接口。
+- FastAPI 后端工程骨架
+- 基础配置与日志模块
+- `/health` 和 `/version` 基础接口
+- pytest 基础测试
+- Week 1 周志、论文占位、评测占位和项目讲解稿
+- TXT loader 最小版
+
+当前暂不进入 PDF loader、DOCX loader、统一 Document 对象、文本切块、向量检索和 `/chat` 问答接口。
 
 ## Features
 
@@ -27,8 +29,14 @@ RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步�
 - `.env.example` 配置模板
 - `app/core/config.py` 配置模块
 - `app/core/logger.py` 日志模块
+- FastAPI lifespan 启动日志
 - pytest 基础接口测试
-- README 与周志初始化
+- `app/loaders/txt_loader.py` TXT 文档读取模块
+- `data/raw/sample.txt` 最小样本文档
+- `tests/test_txt_loader.py` TXT loader 测试
+- README 与周志
+- 论文材料占位目录 `docs/thesis/`
+- 评测样例占位文件 `eval/queries.jsonl`
 - GitHub main / develop 分支管理
 
 ## Project Structure
@@ -38,15 +46,28 @@ raghub/
 ├─ app/
 │  ├─ __init__.py
 │  ├─ main.py
-│  └─ core/
+│  ├─ core/
+│  │  ├─ __init__.py
+│  │  ├─ config.py
+│  │  └─ logger.py
+│  └─ loaders/
 │     ├─ __init__.py
-│     ├─ config.py
-│     └─ logger.py
+│     └─ txt_loader.py
+├─ data/
+│  └─ raw/
+│     └─ sample.txt
 ├─ tests/
-│  └─ test_health.py
+│  ├─ test_health.py
+│  └─ test_txt_loader.py
 ├─ docs/
-│  └─ weekly_logs/
-│     └─ week1.md
+│  ├─ weekly_logs/
+│  │  ├─ week1.md
+│  │  └─ week2.md
+│  ├─ thesis/
+│  │  └─ README.md
+│  └─ project_explanation_week1.md
+├─ eval/
+│  └─ queries.jsonl
 ├─ .env.example
 ├─ .gitignore
 ├─ README.md
@@ -111,6 +132,27 @@ http://127.0.0.1:8000/version
 {"version":"0.1.0"}
 ```
 
+## TXT Loader
+
+当前已实现最小 TXT 文档读取函数：
+
+```python
+from app.loaders.txt_loader import load_txt
+
+content = load_txt("data/raw/sample.txt")
+print(content)
+```
+
+当前 TXT loader 只负责读取本地 `.txt` 文件并返回字符串内容。
+
+暂不处理：
+
+- metadata
+- Document 对象
+- 批量导入
+- 编码自动识别
+- 文本切块
+
 ## Test
 
 运行测试：
@@ -123,22 +165,35 @@ python -m pytest
 
 - `/health` 状态码和返回内容
 - `/version` 状态码和版本字段
+- TXT loader 能读取 `data/raw/sample.txt`
+- TXT loader 返回内容为字符串
+- TXT loader 返回内容包含指定关键词
+
+当前测试结果：
+
+```text
+3 passed
+```
 
 ## Roadmap
 
 接下来计划：
 
-1. 完善 Week 1 基础设施
-   - 日志模块
+1. Week 1：工程骨架与基础设施【已完成】
+   - FastAPI 最小服务
+   - `/health` 和 `/version`
    - 配置模块
-   - README
-   - 基础测试
-2. Week 2 进入文档导入
-   - TXT loader
+   - 日志模块
+   - pytest 基础测试
+   - README、周志、论文占位、评测占位和讲解稿
+
+2. Week 2：文档导入【进行中】
+   - TXT loader 最小版【已完成】
    - PDF loader
    - 统一 Document 对象
-3. 后续逐步实现
    - 文本切块
+
+3. 后续逐步实现
    - 向量检索
    - RAG 问答接口
    - 评测与展示

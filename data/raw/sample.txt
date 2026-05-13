@@ -1,0 +1,3 @@
+RAGHub is a local document question answering project.
+It currently supports FastAPI skeleton, config, logging, and basic tests.
+The next step is document loading.
