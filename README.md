@@ -2,11 +2,11 @@
 
 RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步完成文档导入、文本切块、检索召回、问答生成与评测展示的完整链路。
 
-当前项目已完成 Week 1 工程骨架收口，并进入 Week 2：文档导入阶段。
+当前项目已完成 Week 1 工程骨架收口，并进入 Week 2：文档导入阶段。当前已完成 TXT 和 PDF 两类文档的最小读取能力。
 
 ## Current Stage
 
-当前阶段目标是从最小输入链路开始，先完成本地 TXT 文档读取能力。
+当前阶段目标是完成本地文档导入的最小输入链路，目前已完成 TXT 和 PDF 两类文档的基础读取能力。
 
 当前已经完成：
 
@@ -15,9 +15,10 @@ RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步�
 - `/health` 和 `/version` 基础接口
 - pytest 基础测试
 - Week 1 周志、论文占位、评测占位和项目讲解稿
-- TXT loader 最小版
+- TXT loader 最小版，支持读取本地 `.txt` 文件内容
+- PDF loader 最小版，支持按页提取 PDF 文本
 
-当前暂不进入 PDF loader、DOCX loader、统一 Document 对象、文本切块、向量检索和 `/chat` 问答接口。
+当前暂不进入 DOCX loader、统一 Document 对象、文本切块、向量检索和 `/chat` 问答接口。
 
 ## Features
 
@@ -32,8 +33,12 @@ RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步�
 - FastAPI lifespan 启动日志
 - pytest 基础接口测试
 - `app/loaders/txt_loader.py` TXT 文档读取模块
-- `data/raw/sample.txt` 最小样本文档
+- `data/raw/sample.txt` 最小 TXT 样本文档
 - `tests/test_txt_loader.py` TXT loader 测试
+- `pypdf` PDF 读取依赖
+- `app/loaders/pdf_loader.py` PDF 文档读取模块
+- `data/raw/sample.pdf` 最小 PDF 样本文档
+- `tests/test_pdf_loader.py` PDF loader 测试
 - README 与周志
 - 论文材料占位目录 `docs/thesis/`
 - 评测样例占位文件 `eval/queries.jsonl`
@@ -52,13 +57,16 @@ raghub/
 │  │  └─ logger.py
 │  └─ loaders/
 │     ├─ __init__.py
-│     └─ txt_loader.py
+│     ├─ txt_loader.py
+│     └─ pdf_loader.py
 ├─ data/
 │  └─ raw/
-│     └─ sample.txt
+│     ├─ sample.txt
+│     └─ sample.pdf
 ├─ tests/
 │  ├─ test_health.py
-│  └─ test_txt_loader.py
+│  ├─ test_txt_loader.py
+│  └─ test_pdf_loader.py
 ├─ docs/
 │  ├─ weekly_logs/
 │  │  ├─ week1.md
@@ -153,6 +161,29 @@ print(content)
 - 编码自动识别
 - 文本切块
 
+## PDF Loader
+
+当前已实现最小 PDF 文档读取函数：
+
+```python
+from app.loaders.pdf_loader import load_pdf
+
+pages = load_pdf("data/raw/sample.pdf")
+print(pages)
+```
+
+当前 PDF loader 按页提取文本，并返回 `list[str]`。
+
+每个列表元素对应 PDF 中的一页文本内容。
+
+暂不处理：
+
+- metadata
+- Document 对象
+- 扫描版 PDF / OCR
+- 批量导入
+- 文本切块
+
 ## Test
 
 运行测试：
@@ -168,11 +199,14 @@ python -m pytest
 - TXT loader 能读取 `data/raw/sample.txt`
 - TXT loader 返回内容为字符串
 - TXT loader 返回内容包含指定关键词
+- PDF loader 能读取 `data/raw/sample.pdf`
+- PDF loader 返回内容为列表
+- PDF loader 返回内容包含指定关键词
 
 当前测试结果：
 
 ```text
-3 passed
+4 passed
 ```
 
 ## Roadmap
@@ -189,7 +223,7 @@ python -m pytest
 
 2. Week 2：文档导入【进行中】
    - TXT loader 最小版【已完成】
-   - PDF loader
+   - PDF loader 最小版【已完成】
    - 统一 Document 对象
    - 文本切块
 
