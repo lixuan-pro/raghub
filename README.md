@@ -2,25 +2,19 @@
 
 RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步完成文档导入、文本切块、检索召回、问答生成与评测展示的完整链路。
 
-当前项目已完成 Week 1 工程骨架收口，并进入 Week 2：文档导入阶段。当前已完成 TXT 和 PDF 两类文档的最小读取能力，并新增最小版 `Document` 对象，用于统一表示不同来源的文档内容。
+当前项目已完成 Week 1 工程骨架收口，并进入 Week 2：文档导入与预处理阶段。当前已完成 TXT/PDF 最小读取、统一 `Document` 对象，以及固定长度 + overlap 的最小文本切块能力。
 
 ## Current Stage
 
-当前阶段目标是完成本地文档导入的最小输入链路，目前已完成 TXT、PDF 两类文档的基础读取能力，并能统一输出为 `list[Document]`。
+当前阶段目标是完成本地文档导入与预处理的最小输入链路，目前已完成：
 
-当前已经完成：
+- TXT 文档基础读取
+- PDF 文档按页读取
+- TXT/PDF 统一输出为 `list[Document]`
+- 固定长度 + overlap 文本切块
+- `Document` 级切块输出
 
-- FastAPI 后端工程骨架
-- 基础配置与日志模块
-- `/health` 和 `/version` 基础接口
-- pytest 基础测试
-- Week 1 周志、论文占位、评测占位和项目讲解稿
-- TXT loader 最小版，支持读取本地 `.txt` 文件内容
-- PDF loader 最小版，支持按页提取 PDF 文本
-- 最小版 `Document` 对象
-- TXT 和 PDF 统一输出为 `list[Document]`
-
-当前暂不进入 DOCX loader、文本切块、chunk overlap、metadata 扩展、向量检索和 `/chat` 问答接口。
+当前暂不进入 DOCX loader、metadata 扩展、token 切块、语义切块、向量检索和 `/chat` 问答接口。
 
 ## Features
 
@@ -45,6 +39,10 @@ RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步�
 - `load_txt_documents()` TXT 文档统一包装函数
 - `load_pdf_documents()` PDF 文档统一包装函数
 - `tests/test_document_loaders.py` Document 输出测试
+- `app/processors/text_chunker.py` 文本切块模块
+- `chunk_text()` 固定长度 + overlap 纯文本切块函数
+- `chunk_documents()` Document 级切块函数
+- `tests/test_text_chunker.py` 文本切块测试
 - README 与周志
 - 论文材料占位目录 `docs/thesis/`
 - 评测样例占位文件 `eval/queries.jsonl`
@@ -65,9 +63,12 @@ raghub/
 │  │  ├─ __init__.py
 │  │  ├─ txt_loader.py
 │  │  └─ pdf_loader.py
-│  └─ models/
+│  ├─ models/
+│  │  ├─ __init__.py
+│  │  └─ document.py
+│  └─ processors/
 │     ├─ __init__.py
-│     └─ document.py
+│     └─ text_chunker.py
 ├─ data/
 │  └─ raw/
 │     ├─ sample.txt
@@ -76,7 +77,8 @@ raghub/
 │  ├─ test_health.py
 │  ├─ test_txt_loader.py
 │  ├─ test_pdf_loader.py
-│  └─ test_document_loaders.py
+│  ├─ test_document_loaders.py
+│  └─ test_text_chunker.py
 ├─ docs/
 │  ├─ weekly_logs/
 │  │  ├─ week1.md
@@ -179,7 +181,7 @@ print(documents)
 - metadata 扩展
 - 批量导入
 - 编码自动识别
-- 文本切块
+- 复杂格式解析
 
 ## PDF Loader
 
@@ -212,7 +214,7 @@ print(documents)
 - metadata 扩展
 - 扫描版 PDF / OCR
 - 批量导入
-- 文本切块
+- 复杂版面解析
 
 ## Document Model
 
@@ -239,6 +241,47 @@ class Document:
 
 当前 `Document` 对象的作用是统一 TXT 和 PDF 的输出结构，为后续文本切块提供统一输入。
 
+## Text Chunker
+
+当前已实现最小文本切块模块：
+
+```python
+from app.processors.text_chunker import chunk_text
+
+chunks = chunk_text(
+    text="abcdefghijklmnopqrstuvwxyz",
+    chunk_size=10,
+    overlap=2,
+)
+print(chunks)
+```
+
+`chunk_text()` 当前按字符长度进行固定长度切块，并支持 overlap。
+
+同时支持 `Document` 级切块：
+
+```python
+from app.loaders.txt_loader import load_txt_documents
+from app.processors.text_chunker import chunk_documents
+
+documents = load_txt_documents("data/raw/sample.txt")
+chunks = chunk_documents(documents, chunk_size=50, overlap=10)
+print(len(chunks))
+print(chunks[0].content)
+```
+
+`chunk_documents()` 会将 `list[Document]` 切分为更小的 `list[Document]`，并保留原始 `source`、`file_type` 和 `page` 信息。
+
+暂不处理：
+
+- `chunk_id`
+- metadata 扩展
+- token 切块
+- 中文分词切块
+- 语义切块
+- 向量化
+- 检索
+
 ## Test
 
 运行测试：
@@ -260,11 +303,16 @@ python -m pytest
 - TXT 能统一输出为 `list[Document]`
 - PDF 能统一输出为 `list[Document]`
 - PDF Document 保留页码信息
+- `chunk_text()` 能完成固定长度切块
+- `chunk_text()` 支持 overlap
+- `chunk_text()` 对空字符串返回空列表
+- `chunk_documents()` 能输出 chunk 后的 `list[Document]`
+- `chunk_documents()` 保留原始 `source`、`file_type` 和 `page`
 
 当前测试结果：
 
 ```text
-6 passed
+10 passed
 ```
 
 ## Roadmap
@@ -279,13 +327,14 @@ python -m pytest
    - pytest 基础测试
    - README、周志、论文占位、评测占位和讲解稿
 
-2. Week 2：文档导入【进行中】
+2. Week 2：文档导入与预处理【进行中】
    - TXT loader 最小版【已完成】
    - PDF loader 最小版【已完成】
    - 最小版 `Document` 对象【已完成】
-   - 文本切块
+   - 固定长度 + overlap 文本切块【已完成】
 
 3. 后续逐步实现
+   - 评测样例扩展
    - 向量检索
    - RAG 问答接口
    - 评测与展示
