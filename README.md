@@ -2,11 +2,11 @@
 
 RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步完成文档导入、文本切块、检索召回、问答生成与评测展示的完整链路。
 
-当前项目已完成 Week 1 工程骨架收口，并进入 Week 2：文档导入阶段。当前已完成 TXT 和 PDF 两类文档的最小读取能力。
+当前项目已完成 Week 1 工程骨架收口，并进入 Week 2：文档导入阶段。当前已完成 TXT 和 PDF 两类文档的最小读取能力，并新增最小版 `Document` 对象，用于统一表示不同来源的文档内容。
 
 ## Current Stage
 
-当前阶段目标是完成本地文档导入的最小输入链路，目前已完成 TXT 和 PDF 两类文档的基础读取能力。
+当前阶段目标是完成本地文档导入的最小输入链路，目前已完成 TXT、PDF 两类文档的基础读取能力，并能统一输出为 `list[Document]`。
 
 当前已经完成：
 
@@ -17,8 +17,10 @@ RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步�
 - Week 1 周志、论文占位、评测占位和项目讲解稿
 - TXT loader 最小版，支持读取本地 `.txt` 文件内容
 - PDF loader 最小版，支持按页提取 PDF 文本
+- 最小版 `Document` 对象
+- TXT 和 PDF 统一输出为 `list[Document]`
 
-当前暂不进入 DOCX loader、统一 Document 对象、文本切块、向量检索和 `/chat` 问答接口。
+当前暂不进入 DOCX loader、文本切块、chunk overlap、metadata 扩展、向量检索和 `/chat` 问答接口。
 
 ## Features
 
@@ -39,6 +41,10 @@ RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步�
 - `app/loaders/pdf_loader.py` PDF 文档读取模块
 - `data/raw/sample.pdf` 最小 PDF 样本文档
 - `tests/test_pdf_loader.py` PDF loader 测试
+- `app/models/document.py` 最小 Document 数据对象
+- `load_txt_documents()` TXT 文档统一包装函数
+- `load_pdf_documents()` PDF 文档统一包装函数
+- `tests/test_document_loaders.py` Document 输出测试
 - README 与周志
 - 论文材料占位目录 `docs/thesis/`
 - 评测样例占位文件 `eval/queries.jsonl`
@@ -55,10 +61,13 @@ raghub/
 │  │  ├─ __init__.py
 │  │  ├─ config.py
 │  │  └─ logger.py
-│  └─ loaders/
+│  ├─ loaders/
+│  │  ├─ __init__.py
+│  │  ├─ txt_loader.py
+│  │  └─ pdf_loader.py
+│  └─ models/
 │     ├─ __init__.py
-│     ├─ txt_loader.py
-│     └─ pdf_loader.py
+│     └─ document.py
 ├─ data/
 │  └─ raw/
 │     ├─ sample.txt
@@ -66,7 +75,8 @@ raghub/
 ├─ tests/
 │  ├─ test_health.py
 │  ├─ test_txt_loader.py
-│  └─ test_pdf_loader.py
+│  ├─ test_pdf_loader.py
+│  └─ test_document_loaders.py
 ├─ docs/
 │  ├─ weekly_logs/
 │  │  ├─ week1.md
@@ -153,10 +163,20 @@ print(content)
 
 当前 TXT loader 只负责读取本地 `.txt` 文件并返回字符串内容。
 
+同时新增统一包装函数：
+
+```python
+from app.loaders.txt_loader import load_txt_documents
+
+documents = load_txt_documents("data/raw/sample.txt")
+print(documents)
+```
+
+`load_txt_documents()` 会返回 `list[Document]`，当前 TXT 文件会被包装成一个 `Document`。
+
 暂不处理：
 
-- metadata
-- Document 对象
+- metadata 扩展
 - 批量导入
 - 编码自动识别
 - 文本切块
@@ -176,13 +196,48 @@ print(pages)
 
 每个列表元素对应 PDF 中的一页文本内容。
 
+同时新增统一包装函数：
+
+```python
+from app.loaders.pdf_loader import load_pdf_documents
+
+documents = load_pdf_documents("data/raw/sample.pdf")
+print(documents)
+```
+
+`load_pdf_documents()` 会把每一页 PDF 文本包装成一个 `Document`，并保留页码信息。
+
 暂不处理：
 
-- metadata
-- Document 对象
+- metadata 扩展
 - 扫描版 PDF / OCR
 - 批量导入
 - 文本切块
+
+## Document Model
+
+当前已新增最小版 `Document` 对象：
+
+```python
+from dataclasses import dataclass
+
+
+@dataclass
+class Document:
+    content: str
+    source: str
+    file_type: str
+    page: int | None = None
+```
+
+字段说明：
+
+- `content`：文档内容
+- `source`：原始文件路径
+- `file_type`：文件类型，例如 `txt` 或 `pdf`
+- `page`：页码，TXT 当前为 `None`，PDF 从第 1 页开始记录
+
+当前 `Document` 对象的作用是统一 TXT 和 PDF 的输出结构，为后续文本切块提供统一输入。
 
 ## Test
 
@@ -202,11 +257,14 @@ python -m pytest
 - PDF loader 能读取 `data/raw/sample.pdf`
 - PDF loader 返回内容为列表
 - PDF loader 返回内容包含指定关键词
+- TXT 能统一输出为 `list[Document]`
+- PDF 能统一输出为 `list[Document]`
+- PDF Document 保留页码信息
 
 当前测试结果：
 
 ```text
-4 passed
+6 passed
 ```
 
 ## Roadmap
@@ -224,7 +282,7 @@ python -m pytest
 2. Week 2：文档导入【进行中】
    - TXT loader 最小版【已完成】
    - PDF loader 最小版【已完成】
-   - 统一 Document 对象
+   - 最小版 `Document` 对象【已完成】
    - 文本切块
 
 3. 后续逐步实现

@@ -90,3 +90,54 @@ PDF loader 是 RAGHub 输入链路中的第二个文档加载模块。
 与 TXT loader 直接返回字符串不同，PDF loader 当前返回 `list[str]`，每个元素对应一页提取出的文本。这样做是为了保留页级边界，方便后续设计统一 Document 对象、记录页码信息和进入文本切块流程。
 
 当前 PDF loader 只处理可提取文本的普通 PDF，不处理扫描版 PDF 和 OCR。
+
+
+---
+
+## Day 6 - 统一 Document 对象最小闭环
+
+### 今日目标
+
+设计并落地最小版 `Document` 对象，让 TXT 和 PDF 两类文档都能被统一包装成 `list[Document]`，为后续文本切块提供统一输入。
+
+### 今日完成
+
+- 新建 `app/models/` 目录。
+- 新建 `app/models/__init__.py`。
+- 新建 `app/models/document.py`。
+- 使用 `dataclass` 定义最小版 `Document` 对象。
+- 当前 `Document` 包含 4 个字段：
+  - `content: str`
+  - `source: str`
+  - `file_type: str`
+  - `page: int | None = None`
+- 保留原有 `load_txt(path: str) -> str`。
+- 新增 `load_txt_documents(path: str) -> list[Document]`。
+- 保留原有 `load_pdf(path: str) -> list[str]`。
+- 新增 `load_pdf_documents(path: str) -> list[Document]`。
+- 新建 `tests/test_document_loaders.py`。
+- 编写 TXT 和 PDF 的统一 Document 输出测试。
+- 运行 `python -m pytest`，结果为 `6 passed`。
+
+### 当前边界
+
+今天只完成统一输入对象，不进入以下内容：
+
+- chunk 切块
+- chunk overlap
+- metadata 扩展
+- title / author / time
+- `data/processed/`
+- eval 扩展
+- DOCX loader
+- embedding
+- 向量库
+- `/chat`
+
+### 当前理解
+
+`Document` 是 RAGHub 文档处理链路里的统一数据结构。
+
+在 Day 4 和 Day 5 中，TXT 和 PDF 已经分别能够读取原始文本。Day 6 的作用是把不同文件格式的读取结果统一包装成 `Document` 列表，让后续切块模块不用关心原始文件来自 TXT 还是 PDF。
+
+当前 `Document` 仍然是最小字段版，只保留内容、来源、文件类型和页码信息。后续如果需要 metadata、标题、作者、时间等字段，再逐步扩展。
