@@ -2,7 +2,7 @@
 
 RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步完成文档导入、文本切块、检索召回、问答生成与评测展示的完整链路。
 
-当前项目已完成 Week 1 工程骨架收口，并进入 Week 2：文档导入与预处理阶段。当前已完成 TXT/PDF 最小读取、统一 `Document` 对象，以及固定长度 + overlap 的最小文本切块能力。
+当前项目已完成 Week 1 工程骨架收口，并进入 Week 2：文档导入与预处理阶段。当前已完成 TXT/PDF 最小读取、统一 `Document` 对象、固定长度 + overlap 文本切块，并能通过预处理脚本生成可查看的 chunk 预览文件。
 
 ## Current Stage
 
@@ -13,8 +13,10 @@ RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步�
 - TXT/PDF 统一输出为 `list[Document]`
 - 固定长度 + overlap 文本切块
 - `Document` 级切块输出
+- 预处理链路脚本
+- chunk 预览结果落盘
 
-当前暂不进入 DOCX loader、metadata 扩展、token 切块、语义切块、向量检索和 `/chat` 问答接口。
+当前暂不进入 DOCX loader、metadata 扩展、token 切块、语义切块、embedding、向量检索和 `/chat` 问答接口。
 
 ## Features
 
@@ -43,9 +45,11 @@ RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步�
 - `chunk_text()` 固定长度 + overlap 纯文本切块函数
 - `chunk_documents()` Document 级切块函数
 - `tests/test_text_chunker.py` 文本切块测试
+- `scripts/build_chunks_demo.py` 最小预处理链路脚本
+- `data/processed/chunks_preview.jsonl` chunk 预览输出文件
+- `eval/queries.jsonl` Week 2 最小评测占位样例
 - README 与周志
 - 论文材料占位目录 `docs/thesis/`
-- 评测样例占位文件 `eval/queries.jsonl`
 - GitHub main / develop 分支管理
 
 ## Project Structure
@@ -70,9 +74,11 @@ raghub/
 │     ├─ __init__.py
 │     └─ text_chunker.py
 ├─ data/
-│  └─ raw/
-│     ├─ sample.txt
-│     └─ sample.pdf
+│  ├─ raw/
+│  │  ├─ sample.txt
+│  │  └─ sample.pdf
+│  └─ processed/
+│     └─ chunks_preview.jsonl
 ├─ tests/
 │  ├─ test_health.py
 │  ├─ test_txt_loader.py
@@ -88,6 +94,8 @@ raghub/
 │  └─ project_explanation_week1.md
 ├─ eval/
 │  └─ queries.jsonl
+├─ scripts/
+│  └─ build_chunks_demo.py
 ├─ .env.example
 ├─ .gitignore
 ├─ README.md
@@ -282,6 +290,58 @@ print(chunks[0].content)
 - 向量化
 - 检索
 
+## Preprocessing Demo
+
+当前已新增最小预处理脚本：
+
+```bash
+python scripts/build_chunks_demo.py
+```
+
+该脚本会串联以下流程：
+
+```text
+data/raw/sample.txt
+data/raw/sample.pdf
+→ loader
+→ list[Document]
+→ chunk_documents()
+→ data/processed/chunks_preview.jsonl
+```
+
+运行后会输出类似结果：
+
+```text
+txt documents: 1
+pdf documents: 1
+chunks: 7
+output: data/processed/chunks_preview.jsonl
+```
+
+`chunks_preview.jsonl` 当前每行包含：
+
+- `content`
+- `source`
+- `file_type`
+- `page`
+
+示例格式：
+
+```json
+{"content": "RAGHub is a local document question answering proj", "source": "data/raw/sample.txt", "file_type": "txt", "page": null}
+```
+
+该文件用于预览 Week 2 文档导入与预处理链路的阶段成果，暂不作为最终检索索引格式。
+
+## Evaluation Placeholders
+
+当前 `eval/queries.jsonl` 保存最小评测占位样例。
+
+Week 1 已包含基础接口相关问题。  
+Week 2 新增了基于样本文档内容的占位问题，用于后续检索评测扩展。
+
+当前仍不是正式评测集，只作为后续检索命中测试和问答评测的最小起点。
+
 ## Test
 
 运行测试：
@@ -332,9 +392,11 @@ python -m pytest
    - PDF loader 最小版【已完成】
    - 最小版 `Document` 对象【已完成】
    - 固定长度 + overlap 文本切块【已完成】
+   - 预处理结果落盘与 chunk 预览【已完成】
 
 3. 后续逐步实现
    - 评测样例扩展
+   - embedding 最小向量化准备
    - 向量检索
    - RAG 问答接口
    - 评测与展示

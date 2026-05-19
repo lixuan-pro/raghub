@@ -1,0 +1,7 @@
+{"content": "RAGHub is a local document question answering proj", "source": "data/raw/sample.txt", "file_type": "txt", "page": null}
+{"content": "ering project.\nIt currently supports FastAPI skele", "source": "data/raw/sample.txt", "file_type": "txt", "page": null}
+{"content": "tAPI skeleton, config, logging, and basic tests.\nT", "source": "data/raw/sample.txt", "file_type": "txt", "page": null}
+{"content": "c tests.\nThe next step is document loading.", "source": "data/raw/sample.txt", "file_type": "txt", "page": null}
+{"content": "RAGHub PDF loader sample. \n \nThis PDF file is used", "source": "data/raw/sample.pdf", "file_type": "pdf", "page": 1}
+{"content": "le is used to test document loading. \n \nThe next s", "source": "data/raw/sample.pdf", "file_type": "pdf", "page": 1}
+{"content": "The next step is page-based PDF text extraction. ", "source": "data/raw/sample.pdf", "file_type": "pdf", "page": 1}

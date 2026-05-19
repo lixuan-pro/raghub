@@ -196,3 +196,57 @@ Day 6 已经将 TXT/PDF 统一输出为 `list[Document]`。Day 7 在此基础上
 
 今天先选择固定长度 + overlap 的最小策略，是为了尽快跑通稳定的检索前处理链路。更复杂的 token 切块、语义切块和 metadata 扩展放到后续优化阶段。
 
+---
+
+## Day 8 - Week 2 预处理链路收口
+
+### 今日目标
+
+完成 Week 2 的最小阶段收口：把 TXT/PDF 文档导入、统一 `Document` 输出和文本切块流程串成一个可运行、可落盘、可查看的预处理链路。
+
+### 今日完成
+
+- 新建 `data/processed/` 目录，作为预处理结果输出位置。
+- 新建 `scripts/` 目录。
+- 新建 `scripts/build_chunks_demo.py`。
+- 编写最小预处理脚本，串联以下流程：
+  - `load_txt_documents()`
+  - `load_pdf_documents()`
+  - 合并为 `list[Document]`
+  - `chunk_documents()`
+  - 输出到 `data/processed/chunks_preview.jsonl`
+- 实际运行脚本，结果为：
+  - `txt documents: 1`
+  - `pdf documents: 1`
+  - `chunks: 7`
+  - `output: data/processed/chunks_preview.jsonl`
+- 生成 `data/processed/chunks_preview.jsonl`，每行包含：
+  - `content`
+  - `source`
+  - `file_type`
+  - `page`
+- 扩展 `eval/queries.jsonl`，新增 Week 2 最小评测占位样例：
+  - `q3`：基于 `sample.txt`
+  - `q4`：基于 `sample.pdf`
+
+### 当前边界
+
+今天只做 Week 2 阶段收口和最小结果落盘，不进入以下内容：
+
+- `chunk_id`
+- metadata 扩展
+- title / author / time
+- embedding
+- 向量库
+- BM25
+- `/retrieve`
+- `/chat`
+
+### 当前理解
+
+Day 8 的重点不是继续扩展新功能，而是把 Week 2 已经完成的主链路真正跑成一个阶段成果。
+
+当前链路已经可以从原始 TXT/PDF 文档出发，经过 loader、`Document` 统一输出和文本切块，最终生成可查看的 `chunks_preview.jsonl` 文件。
+
+这说明 Week 2 的文档导入与预处理阶段已经具备了最小可交付形态。后续进入 embedding 和检索时，就可以基于已经落盘的 chunk 结果继续推进，而不是在空中接下一步。
+
