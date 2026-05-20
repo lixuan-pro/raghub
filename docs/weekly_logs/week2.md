@@ -250,3 +250,97 @@ Day 8 的重点不是继续扩展新功能，而是把 Week 2 已经完成的主
 
 这说明 Week 2 的文档导入与预处理阶段已经具备了最小可交付形态。后续进入 embedding 和检索时，就可以基于已经落盘的 chunk 结果继续推进，而不是在空中接下一步。
 
+
+
+## Week 2 阶段小结 - 文档导入与预处理链路收口
+
+### 本周完成内容
+
+Week 2 的目标是完成 RAGHub 文档导入与预处理阶段的最小闭环。
+
+当前已经完成：
+
+- TXT 文档最小读取能力
+- PDF 文档按页读取能力
+- 最小版 `Document` 数据对象
+- TXT/PDF 统一输出为 `list[Document]`
+- 固定长度 + overlap 文本切块
+- `Document` 级切块输出
+- 预处理脚本 `scripts/build_chunks_demo.py`
+- chunk 预览结果 `data/processed/chunks_preview.jsonl`
+- Week 2 最小评测占位样例
+- 文档导入与预处理链路设计说明
+- embedding baseline 准备说明
+
+### 当前主链路
+
+当前 Week 2 已经跑通的主链路是：
+
+
+data/raw/sample.txt
+data/raw/sample.pdf
+→ loader
+→ list[Document]
+→ chunk_documents()
+→ data/processed/chunks_preview.jsonl
+
+这说明项目已经从“能读取文档”推进到“能生成可查看的预处理 chunk 结果”。
+
+当前未完成内容
+
+当前阶段还没有进入：
+
+chunk_id
+metadata 扩展
+title / author / time
+embedding 代码实现
+向量库
+BM25
+/retrieve
+/chat
+RAG 问答接口
+
+这些内容会在后续阶段逐步展开。
+
+为什么现在不直接进入向量库
+
+当前不直接进入向量库，是因为向量检索依赖稳定的 chunk 输入。
+
+在进入 embedding 和向量库之前，需要先确认：
+
+文档能稳定读取
+不同格式能统一成 Document
+文本能稳定切块
+chunk 结果可以落盘查看
+评测占位问题有最小入口
+
+Week 2 已经完成这些前置条件，因此下一阶段可以开始围绕 embedding 最小化实现展开。
+
+下一步计划
+
+下一阶段建议进入 embedding baseline：
+
+chunks_preview.jsonl
+→ 读取 chunk content
+→ embedding 模型
+→ 向量结果
+
+Day 10 的重点应是先验证“chunk 文本能否被转换成向量”，暂时不直接进入 FAISS、检索接口或 /chat。
+
+
+---
+
+## 4. 完成标准
+
+`week2.md` 末尾应该出现：
+
+
+Week 2 阶段小结 - 文档导入与预处理链路收口
+
+并且能说明：
+
+Week 2 完成了什么
+当前主链路是什么
+还没做什么
+为什么不直接进向量库
+下一步进入 embedding baseline
