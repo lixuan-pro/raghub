@@ -1,0 +1,8 @@
+{
+  "model_name": "BAAI/bge-base-zh-v1.5",
+  "num_chunks": 7,
+  "embedding_dim": 768,
+  "normalized": true,
+  "input_path": "data\\processed\\chunks_preview.jsonl",
+  "output_path": "data\\processed\\chunk_embeddings.npy"
+}
