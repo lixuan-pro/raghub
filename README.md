@@ -1,22 +1,49 @@
 # RAGHub
 
-RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步完成文档导入、文本切块、检索召回、问答生成与评测展示的完整链路。
+RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步完成文档导入、文本切块、embedding、检索召回、问答生成与评测展示的完整链路。
 
-当前项目已完成 Week 1 工程骨架收口，并进入 Week 2：文档导入与预处理阶段。当前已完成 TXT/PDF 最小读取、统一 `Document` 对象、固定长度 + overlap 文本切块，并能通过预处理脚本生成可查看的 chunk 预览文件。
+当前项目已完成 Week 1 工程骨架、Week 2 文档导入与预处理链路，并进入 Week 3 embedding 与向量检索准备阶段。
+
+当前已经支持：
+
+- TXT/PDF 最小读取
+- 统一 `Document` 对象
+- 固定长度 + overlap 文本切块
+- 预处理结果落盘为 `chunks_preview.jsonl`
+- 本地 embedding baseline
+- 将 chunks 转换为向量并保存为 `.npy`
+- 内存版向量相似度 top-k 检索 baseline
+
+当前暂未进入完整向量库、FastAPI `/retrieve` 接口、`/chat` 问答接口、BM25、混合检索或 RAG 生成阶段。
+
+---
 
 ## Current Stage
 
-当前阶段目标是完成本地文档导入与预处理的最小输入链路，目前已完成：
+当前阶段状态：
 
-- TXT 文档基础读取
-- PDF 文档按页读取
-- TXT/PDF 统一输出为 `list[Document]`
-- 固定长度 + overlap 文本切块
-- `Document` 级切块输出
-- 预处理链路脚本
-- chunk 预览结果落盘
+- Week 1：工程骨架与基础设施【已完成】
+- Week 2：文档导入与预处理【已完成】
+- Week 3：embedding baseline 与内存版向量检索 baseline【进行中】
 
-当前暂不进入 DOCX loader、metadata 扩展、token 切块、语义切块、embedding、向量检索和 `/chat` 问答接口。
+当前已完成的主链路：
+
+```text
+原始 TXT / PDF 文档
+→ loader 读取
+→ Document 统一表示
+→ 固定长度 + overlap 文本切块
+→ chunks_preview.jsonl
+→ embedding model
+→ chunk_embeddings.npy
+→ query embedding
+→ cosine similarity
+→ top-k chunks
+```
+
+当前重点是先完成本地检索 baseline，为后续 `/retrieve` API 和 RAG 问答接口打基础。
+
+---
 
 ## Features
 
@@ -47,10 +74,23 @@ RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步�
 - `tests/test_text_chunker.py` 文本切块测试
 - `scripts/build_chunks_demo.py` 最小预处理链路脚本
 - `data/processed/chunks_preview.jsonl` chunk 预览输出文件
-- `eval/queries.jsonl` Week 2 最小评测占位样例
-- README 与周志
+- `app/embeddings/local_embedder.py` 本地 embedding 模块
+- `scripts/build_embeddings_demo.py` embedding 构建脚本
+- `data/processed/chunk_embeddings.npy` chunk 向量矩阵
+- `data/processed/chunk_embeddings_meta.json` embedding 元信息文件
+- `app/retrievers/vector_retriever.py` 内存版向量相似度检索模块
+- `scripts/retrieve_demo.py` 最小检索 demo 脚本
+- `tests/test_vector_retriever.py` 向量相似度测试
+- `eval/queries.jsonl` Week 1 / Week 2 最小评测占位样例
+- `docs/design/preprocessing_pipeline.md` 文档导入与预处理链路设计说明
+- `docs/design/embedding_baseline_plan.md` embedding baseline 准备说明
+- `docs/weekly_logs/week1.md`
+- `docs/weekly_logs/week2.md`
+- `docs/weekly_logs/week3.md`
 - 论文材料占位目录 `docs/thesis/`
 - GitHub main / develop 分支管理
+
+---
 
 ## Project Structure
 
@@ -70,37 +110,54 @@ raghub/
 │  ├─ models/
 │  │  ├─ __init__.py
 │  │  └─ document.py
-│  └─ processors/
+│  ├─ processors/
+│  │  ├─ __init__.py
+│  │  └─ text_chunker.py
+│  ├─ embeddings/
+│  │  ├─ __init__.py
+│  │  └─ local_embedder.py
+│  └─ retrievers/
 │     ├─ __init__.py
-│     └─ text_chunker.py
+│     └─ vector_retriever.py
 ├─ data/
 │  ├─ raw/
 │  │  ├─ sample.txt
 │  │  └─ sample.pdf
 │  └─ processed/
-│     └─ chunks_preview.jsonl
+│     ├─ chunks_preview.jsonl
+│     ├─ chunk_embeddings.npy
+│     └─ chunk_embeddings_meta.json
 ├─ tests/
 │  ├─ test_health.py
 │  ├─ test_txt_loader.py
 │  ├─ test_pdf_loader.py
 │  ├─ test_document_loaders.py
-│  └─ test_text_chunker.py
+│  ├─ test_text_chunker.py
+│  └─ test_vector_retriever.py
 ├─ docs/
+│  ├─ design/
+│  │  ├─ preprocessing_pipeline.md
+│  │  └─ embedding_baseline_plan.md
 │  ├─ weekly_logs/
 │  │  ├─ week1.md
-│  │  └─ week2.md
+│  │  ├─ week2.md
+│  │  └─ week3.md
 │  ├─ thesis/
 │  │  └─ README.md
 │  └─ project_explanation_week1.md
 ├─ eval/
 │  └─ queries.jsonl
 ├─ scripts/
-│  └─ build_chunks_demo.py
+│  ├─ build_chunks_demo.py
+│  ├─ build_embeddings_demo.py
+│  └─ retrieve_demo.py
 ├─ .env.example
 ├─ .gitignore
 ├─ README.md
 └─ requirements.txt
 ```
+
+---
 
 ## Environment
 
@@ -111,6 +168,15 @@ raghub/
 ```bash
 pip install -r requirements.txt
 ```
+
+当前 embedding baseline 使用：
+
+- `sentence-transformers`
+- `BAAI/bge-base-zh-v1.5`
+
+首次运行 embedding 或 retrieval demo 时，模型可能会从 Hugging Face 下载到本地缓存。
+
+---
 
 ## Configuration
 
@@ -127,13 +193,21 @@ PORT=8000
 LOG_LEVEL=INFO
 ```
 
-如需本地自定义配置，可复制一份 `.env`：
+Windows / PowerShell：
 
-```bash
+```powershell
 copy .env.example .env
 ```
 
+macOS / Linux：
+
+```bash
+cp .env.example .env
+```
+
 `.env` 不应提交到 GitHub。
+
+---
 
 ## Run
 
@@ -160,6 +234,8 @@ http://127.0.0.1:8000/version
 {"version":"0.1.0"}
 ```
 
+---
+
 ## TXT Loader
 
 当前已实现最小 TXT 文档读取函数：
@@ -171,9 +247,7 @@ content = load_txt("data/raw/sample.txt")
 print(content)
 ```
 
-当前 TXT loader 只负责读取本地 `.txt` 文件并返回字符串内容。
-
-同时新增统一包装函数：
+同时支持统一包装函数：
 
 ```python
 from app.loaders.txt_loader import load_txt_documents
@@ -184,12 +258,14 @@ print(documents)
 
 `load_txt_documents()` 会返回 `list[Document]`，当前 TXT 文件会被包装成一个 `Document`。
 
-暂不处理：
+当前暂不处理：
 
 - metadata 扩展
 - 批量导入
 - 编码自动识别
 - 复杂格式解析
+
+---
 
 ## PDF Loader
 
@@ -204,9 +280,7 @@ print(pages)
 
 当前 PDF loader 按页提取文本，并返回 `list[str]`。
 
-每个列表元素对应 PDF 中的一页文本内容。
-
-同时新增统一包装函数：
+同时支持统一包装函数：
 
 ```python
 from app.loaders.pdf_loader import load_pdf_documents
@@ -217,16 +291,18 @@ print(documents)
 
 `load_pdf_documents()` 会把每一页 PDF 文本包装成一个 `Document`，并保留页码信息。
 
-暂不处理：
+当前暂不处理：
 
 - metadata 扩展
 - 扫描版 PDF / OCR
 - 批量导入
 - 复杂版面解析
 
+---
+
 ## Document Model
 
-当前已新增最小版 `Document` 对象：
+当前最小版 `Document` 对象：
 
 ```python
 from dataclasses import dataclass
@@ -247,7 +323,9 @@ class Document:
 - `file_type`：文件类型，例如 `txt` 或 `pdf`
 - `page`：页码，TXT 当前为 `None`，PDF 从第 1 页开始记录
 
-当前 `Document` 对象的作用是统一 TXT 和 PDF 的输出结构，为后续文本切块提供统一输入。
+当前 `Document` 对象的作用是统一 TXT 和 PDF 的输出结构，为后续文本切块、embedding 和检索提供统一输入。
+
+---
 
 ## Text Chunker
 
@@ -280,15 +358,14 @@ print(chunks[0].content)
 
 `chunk_documents()` 会将 `list[Document]` 切分为更小的 `list[Document]`，并保留原始 `source`、`file_type` 和 `page` 信息。
 
-暂不处理：
+当前暂不处理：
 
-- `chunk_id`
-- metadata 扩展
+- 复杂 metadata 扩展
 - token 切块
 - 中文分词切块
 - 语义切块
-- 向量化
-- 检索
+
+---
 
 ## Preprocessing Demo
 
@@ -331,7 +408,150 @@ output: data/processed/chunks_preview.jsonl
 {"content": "RAGHub is a local document question answering proj", "source": "data/raw/sample.txt", "file_type": "txt", "page": null}
 ```
 
-该文件用于预览 Week 2 文档导入与预处理链路的阶段成果，暂不作为最终检索索引格式。
+该文件用于预览文档导入与预处理链路的阶段成果，并作为 embedding baseline 的输入。
+
+---
+
+## Embedding Baseline
+
+当前已实现本地 embedding baseline。
+
+核心模块：
+
+```text
+app/embeddings/local_embedder.py
+```
+
+构建脚本：
+
+```bash
+python scripts/build_embeddings_demo.py
+```
+
+该脚本会读取：
+
+```text
+data/processed/chunks_preview.jsonl
+```
+
+并生成：
+
+```text
+data/processed/chunk_embeddings.npy
+data/processed/chunk_embeddings_meta.json
+```
+
+当前使用模型：
+
+```text
+BAAI/bge-base-zh-v1.5
+```
+
+当前运行结果：
+
+```text
+chunks: 7
+embedding shape: (7, 768)
+model: BAAI/bge-base-zh-v1.5
+output: data/processed/chunk_embeddings.npy
+meta: data/processed/chunk_embeddings_meta.json
+```
+
+其中：
+
+- `chunk_embeddings.npy` 保存 chunk 向量矩阵
+- `chunk_embeddings_meta.json` 记录模型名、chunk 数量、向量维度、是否归一化、输入输出路径
+
+当前暂不处理：
+
+- 多 embedding 模型对比
+- 向量数据库
+- 索引持久化封装
+- 批量增量更新
+
+---
+
+## Vector Retrieval Baseline
+
+当前已实现内存版向量相似度检索 baseline。
+
+核心模块：
+
+```text
+app/retrievers/vector_retriever.py
+```
+
+demo 脚本：
+
+```bash
+python scripts/retrieve_demo.py
+```
+
+当前检索流程：
+
+```text
+query
+→ query embedding
+→ load chunk_embeddings.npy
+→ cosine similarity
+→ top-k chunks
+```
+
+当前返回字段包括：
+
+- `chunk_id`
+- `score`
+- `content`
+- `source`
+- `file_type`
+- `page`
+
+示例输出：
+
+```text
+query: RAGHub 当前支持哪些文档处理能力？
+top_k: 3
+--------------------------------------------------------------------------------
+rank: 1
+chunk_id: 0
+score: 0.6051
+source: data/raw/sample.txt
+file_type: txt
+page: None
+content:
+RAGHub is a local document question answering proj
+--------------------------------------------------------------------------------
+rank: 2
+chunk_id: 4
+score: 0.5645
+source: data/raw/sample.pdf
+file_type: pdf
+page: 1
+content:
+RAGHub PDF loader sample.
+--------------------------------------------------------------------------------
+rank: 3
+chunk_id: 5
+score: 0.3998
+source: data/raw/sample.pdf
+file_type: pdf
+page: 1
+content:
+le is used to test document loading.
+--------------------------------------------------------------------------------
+```
+
+当前暂不处理：
+
+- FAISS
+- Qdrant / Milvus / pgvector
+- BM25
+- 混合检索
+- rerank
+- `/retrieve` API
+- `/chat` API
+
+---
 
 ## Evaluation Placeholders
 
@@ -342,6 +562,22 @@ Week 2 新增了基于样本文档内容的占位问题，用于后续检索评�
 
 当前仍不是正式评测集，只作为后续检索命中测试和问答评测的最小起点。
 
+---
+
+## Design Docs
+
+当前已有设计说明：
+
+- `docs/design/preprocessing_pipeline.md`
+  - 说明 Week 2 文档导入与预处理主链路
+  - 包括 TXT/PDF 输入、Document 统一、固定长度 + overlap 切块、chunk 预览输出
+
+- `docs/design/embedding_baseline_plan.md`
+  - 说明 Week 3 embedding baseline 的准备方向
+  - 包括 embedding 选型标准、最小验证目标和当前边界
+
+---
+
 ## Test
 
 运行测试：
@@ -350,7 +586,7 @@ Week 2 新增了基于样本文档内容的占位问题，用于后续检索评�
 python -m pytest
 ```
 
-当前测试内容：
+当前测试覆盖内容：
 
 - `/health` 状态码和返回内容
 - `/version` 状态码和版本字段
@@ -368,12 +604,16 @@ python -m pytest
 - `chunk_text()` 对空字符串返回空列表
 - `chunk_documents()` 能输出 chunk 后的 `list[Document]`
 - `chunk_documents()` 保留原始 `source`、`file_type` 和 `page`
+- `cosine_similarity()` 能正确计算向量相似度排序
+- `cosine_similarity()` 能处理非法零向量输入
 
 当前测试结果：
 
 ```text
-10 passed
+12 passed
 ```
+
+---
 
 ## Roadmap
 
@@ -387,16 +627,52 @@ python -m pytest
    - pytest 基础测试
    - README、周志、论文占位、评测占位和讲解稿
 
-2. Week 2：文档导入与预处理【进行中】
+2. Week 2：文档导入与预处理【已完成】
    - TXT loader 最小版【已完成】
    - PDF loader 最小版【已完成】
    - 最小版 `Document` 对象【已完成】
    - 固定长度 + overlap 文本切块【已完成】
    - 预处理结果落盘与 chunk 预览【已完成】
+   - Week 2 设计说明与阶段小结【已完成】
 
-3. 后续逐步实现
-   - 评测样例扩展
-   - embedding 最小向量化准备
-   - 向量检索
-   - RAG 问答接口
-   - 评测与展示
+3. Week 3：embedding 与最小向量检索 baseline【进行中】
+   - 读取 `chunks_preview.jsonl`【已完成】
+   - 提取 chunk content【已完成】
+   - 调用 embedding 模型【已完成】
+   - 生成 `chunk_embeddings.npy`【已完成】
+   - 生成 `chunk_embeddings_meta.json`【已完成】
+   - 实现内存版 cosine similarity 检索【已完成】
+   - 返回 top-k chunk 及来源信息【已完成】
+   - 后续准备封装 `/retrieve` API
+
+4. 后续逐步实现
+   - `/retrieve` API
+   - 检索评测扩展
+   - RAG 问答接口 `/chat`
+   - 回答引用来源
+   - 失败案例整理
+   - README / Demo / 简历 / 论文材料完善
+
+---
+
+## Current Boundary
+
+当前项目仍是学习型与求职展示型工程项目，不承诺生产级能力。
+
+当前暂不包含：
+
+- DOCX loader
+- OCR
+- 扫描版 PDF 解析
+- 复杂表格解析
+- GraphRAG
+- 多租户权限
+- 高并发任务队列
+- 完整向量数据库
+- BM25 / hybrid retrieval
+- rerank
+- `/chat` RAG 问答接口
+- 前端页面
+- Docker 部署
+
+这些内容会在后续阶段按优先级逐步评估，不进入当前 Day 11 范围。

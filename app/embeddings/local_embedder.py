@@ -1,15 +1,14 @@
-from sentence_transformers import SentenceTransformer
-
-
 DEFAULT_MODEL_NAME = "BAAI/bge-base-zh-v1.5"
 
 
-def get_embedding_model(model_name: str = DEFAULT_MODEL_NAME) -> SentenceTransformer:
+def get_embedding_model(model_name: str = DEFAULT_MODEL_NAME):
     """
     Load a sentence-transformers embedding model.
 
     The first run may download the model to the local Hugging Face cache.
     """
+    from sentence_transformers import SentenceTransformer
+
     return SentenceTransformer(model_name)
 
 
