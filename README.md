@@ -553,6 +553,52 @@ le is used to test document loading.
 
 ---
 
+## Retrieve API
+
+当前已新增 `POST /retrieve` 接口，用于把用户 query 交给内存版向量检索模块，并返回相似度最高的 top-k chunks。
+
+请求示例：
+
+```json
+{
+  "query": "RAGHub 当前支持哪些文档处理能力？",
+  "top_k": 3
+}
+```
+
+响应示例：
+
+```json
+{
+  "query": "RAGHub 当前支持哪些文档处理能力？",
+  "top_k": 3,
+  "results": [
+    {
+      "chunk_id": "0",
+      "score": 0.83,
+      "content": "...",
+      "source": "data/raw/sample.txt",
+      "file_type": "txt",
+      "page": null
+    }
+  ]
+}
+```
+
+当前边界：
+
+- 仍然是内存版向量检索。
+- 数据来自 `data/processed/chunk_embeddings.npy` 和 `data/processed/chunks_preview.jsonl`。
+- 请求进入 FastAPI 后，由 service 层调用现有 `vector_retriever` 完成召回。
+- 当前不包含 `/chat`、LLM 生成、Agent、rerank 或混合检索。
+
+后续增强方向：
+
+- 可将当前内存检索替换为 Chroma、Qdrant、pgvector 等向量数据库。
+- 可继续增加检索评测、召回质量分析和失败案例整理。
+
+---
+
 ## Evaluation Placeholders
 
 当前 `eval/queries.jsonl` 保存最小评测占位样例。
