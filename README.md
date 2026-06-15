@@ -1,5 +1,121 @@
 # RAGHub
 
+RAGHub 是一个面向本地文档的轻量级 RAG 应用后端系统，用于演示从文档导入、文本切块、embedding、向量检索、API 封装到最小 eval 的完整链路。
+
+## Current Status
+
+当前 v0.2 已完成：
+
+- TXT / PDF 文档导入
+- 统一 `Document` 对象
+- 固定长度 + overlap 文本切块
+- 本地 embedding baseline
+- 内存版向量相似度检索
+- `POST /retrieve` 检索 API
+- `POST /chat` 最小 RAG API
+- mock LLM client
+- 最小 RAG eval
+- 项目问题沉淀与面试材料
+
+当前 `/chat` 使用 mock LLM client，不调用外部大模型 API。当前 eval 是小样本规则化评测，不是工业级自动评测系统。
+
+## Pipeline
+
+```text
+TXT/PDF
+-> Document
+-> Chunk
+-> Embedding
+-> Vector Retrieval
+-> /retrieve
+-> /chat
+-> Eval
+```
+
+当前索引数据来自：
+
+```text
+data/processed/chunks_preview.jsonl
+data/processed/chunk_embeddings.npy
+```
+
+README/API 文档本身尚未进入向量索引，因此 README/API 相关 eval 问题被标记为 `boundary_case`。
+
+## Quick Start
+
+```powershell
+cd E:\Code\Py\raghub
+.\.venv\Scripts\Activate.ps1
+python -m pytest
+python scripts\run_eval.py
+```
+
+启动 FastAPI：
+
+```powershell
+uvicorn app.main:app --reload
+```
+
+## API Quick Examples
+
+`POST /retrieve`
+
+```json
+{
+  "query": "RAGHub 当前支持哪些文档处理能力？",
+  "top_k": 3
+}
+```
+
+`POST /chat`
+
+```json
+{
+  "query": "RAGHub 当前支持哪些文档处理能力？",
+  "top_k": 3
+}
+```
+
+`/chat` 返回 `answer` 和 `retrieved_chunks`，其中 `retrieved_chunks` 保留 `source`、`page`、`score`，便于解释回答来源。
+
+## Eval Snapshot
+
+当前最小 eval 结果：
+
+```text
+total: 9
+all_source_hits: 7/9
+in_corpus_source_hits: 7/7
+boundary_case_total: 2
+```
+
+`boundary_case` 用于暴露当前索引范围限制，例如 README 尚未进入向量索引。
+
+## Current Boundary
+
+RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。
+
+当前不包含：
+
+- 真实 DeepSeek / OpenAI LLM API
+- streaming / SSE
+- Agent 或工具调用
+- Qdrant / Milvus / pgvector
+- BM25 / hybrid retrieval
+- rerank
+- Docker 部署
+- 多租户、权限和生产级并发能力
+
+## Roadmap
+
+- 接入真实 DeepSeek / OpenAI LLM client
+- 增加 streaming/SSE
+- 抽象 vector store interface
+- 接入 Qdrant 或 pgvector
+- 将更多业务文档纳入索引
+- 扩展 eval 问题集和失败案例分析
+- 增加 Docker 部署
+
 RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步完成文档导入、文本切块、embedding、检索召回、问答生成与评测展示的完整链路。
 
 当前项目已完成 Week 1 工程骨架、Week 2 文档导入与预处理链路，并进入 Week 3 embedding 与向量检索准备阶段。
