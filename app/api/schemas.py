@@ -26,3 +26,13 @@ class RetrieveResponse(BaseModel):
     query: str
     top_k: int
     results: list[RetrievedChunk]
+
+
+class ChatRequest(RetrieveRequest):
+    pass
+
+
+class ChatResponse(BaseModel):
+    query: str
+    answer: str
+    retrieved_chunks: list[RetrievedChunk]

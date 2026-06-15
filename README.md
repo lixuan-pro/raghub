@@ -14,7 +14,7 @@ RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步�
 - 将 chunks 转换为向量并保存为 `.npy`
 - 内存版向量相似度 top-k 检索 baseline
 
-当前暂未进入完整向量库、FastAPI `/retrieve` 接口、`/chat` 问答接口、BM25、混合检索或 RAG 生成阶段。
+当前已完成 FastAPI `/retrieve` 接口与最小 mock `/chat` 问答接口，暂未进入完整向量库、真实 LLM API、BM25、混合检索或生产级 RAG 生成阶段。
 
 ---
 
@@ -548,8 +548,6 @@ le is used to test document loading.
 - BM25
 - 混合检索
 - rerank
-- `/retrieve` API
-- `/chat` API
 
 ---
 
@@ -590,12 +588,59 @@ le is used to test document loading.
 - 仍然是内存版向量检索。
 - 数据来自 `data/processed/chunk_embeddings.npy` 和 `data/processed/chunks_preview.jsonl`。
 - 请求进入 FastAPI 后，由 service 层调用现有 `vector_retriever` 完成召回。
-- 当前不包含 `/chat`、LLM 生成、Agent、rerank 或混合检索。
+- 该接口本身不包含 LLM 生成、Agent、rerank 或混合检索。
 
 后续增强方向：
 
 - 可将当前内存检索替换为 Chroma、Qdrant、pgvector 等向量数据库。
 - 可继续增加检索评测、召回质量分析和失败案例整理。
+
+---
+
+## Chat API
+
+当前已新增 `POST /chat` 接口，用于把用户 query 交给检索服务，基于召回 chunks 构造 RAG prompt，并通过 mock LLM client 返回最小问答结果。
+
+请求示例：
+
+```json
+{
+  "query": "RAGHub 当前支持哪些文档处理能力？",
+  "top_k": 3
+}
+```
+
+响应示例：
+
+```json
+{
+  "query": "RAGHub 当前支持哪些文档处理能力？",
+  "answer": "这是基于检索片段生成的简化回答：...",
+  "retrieved_chunks": [
+    {
+      "chunk_id": "0",
+      "score": 0.83,
+      "content": "...",
+      "source": "data/raw/sample.txt",
+      "file_type": "txt",
+      "page": null
+    }
+  ]
+}
+```
+
+当前边界：
+
+- 当前使用 mock LLM client，不调用外部大模型 API。
+- `/chat` 复用 Day 12 的内存版 `/retrieve` 检索链路。
+- 当前不支持 streaming、Agent、工具调用、复杂 prompt 模板或多轮对话。
+- 如果没有有效检索片段，会返回资料不足提示。
+
+后续增强方向：
+
+- 可接入 DeepSeek / OpenAI 等真实 LLM provider。
+- 可增加 streaming 输出。
+- 可增加更严格的 RAG eval、引用校验和失败案例分析。
 
 ---
 
@@ -636,6 +681,9 @@ python -m pytest
 
 - `/health` 状态码和返回内容
 - `/version` 状态码和版本字段
+- `/retrieve` 能返回 query、top_k 和 results
+- `/chat` 能返回 query、answer 和 retrieved_chunks
+- `/chat` 能在无检索结果时返回资料不足提示
 - TXT loader 能读取 `data/raw/sample.txt`
 - TXT loader 返回内容为字符串
 - TXT loader 返回内容包含指定关键词
@@ -656,7 +704,7 @@ python -m pytest
 当前测试结果：
 
 ```text
-12 passed
+20 passed
 ```
 
 ---
@@ -689,12 +737,12 @@ python -m pytest
    - 生成 `chunk_embeddings_meta.json`【已完成】
    - 实现内存版 cosine similarity 检索【已完成】
    - 返回 top-k chunk 及来源信息【已完成】
-   - 后续准备封装 `/retrieve` API
+   - 封装 `/retrieve` API【已完成】
+   - 封装 mock `/chat` API【已完成】
 
 4. 后续逐步实现
-   - `/retrieve` API
    - 检索评测扩展
-   - RAG 问答接口 `/chat`
+   - 接入真实 LLM 的 RAG 问答接口
    - 回答引用来源
    - 失败案例整理
    - README / Demo / 简历 / 论文材料完善
@@ -717,8 +765,8 @@ python -m pytest
 - 完整向量数据库
 - BM25 / hybrid retrieval
 - rerank
-- `/chat` RAG 问答接口
+- 真实 LLM RAG 问答接口
 - 前端页面
 - Docker 部署
 
-这些内容会在后续阶段按优先级逐步评估，不进入当前 Day 11 范围。
+这些内容会在后续阶段按优先级逐步评估，不进入当前 Day 13 范围。
