@@ -1,0 +1,442 @@
+{
+  "summary": {
+    "all_cases": {
+      "total": 9,
+      "source_hits": 7,
+      "source_hit_rate": 0.7777777777777778,
+      "keyword_hits": 17,
+      "expected_keywords": 25,
+      "keyword_hit_rate": 0.68
+    },
+    "in_corpus": {
+      "total": 7,
+      "source_hits": 7,
+      "source_hit_rate": 1.0,
+      "keyword_hits": 17,
+      "expected_keywords": 22,
+      "keyword_hit_rate": 0.7727272727272727
+    },
+    "boundary_case": {
+      "total": 2,
+      "source_hits": 0,
+      "source_hit_rate": 0.0,
+      "keyword_hits": 0,
+      "expected_keywords": 3,
+      "keyword_hit_rate": 0.0
+    },
+    "boundary_case_notes": [
+      "当前 README 尚未进入向量索引，用于验证系统边界"
+    ]
+  },
+  "results": [
+    {
+      "id": "q001",
+      "query": "项目当前支持哪些接口？",
+      "case_type": "boundary_case",
+      "note": "当前 README 尚未进入向量索引，用于验证系统边界",
+      "answer": "这是基于检索片段生成的简化回答：ering project.\nIt currently supports FastAPI skele",
+      "retrieved_chunks": [
+        {
+          "chunk_id": "1",
+          "score": 0.48634466528892517,
+          "content": "ering project.\nIt currently supports FastAPI skele",
+          "source": "data/raw/sample.txt",
+          "file_type": "txt",
+          "page": null
+        },
+        {
+          "chunk_id": "2",
+          "score": 0.4694814085960388,
+          "content": "tAPI skeleton, config, logging, and basic tests.\nT",
+          "source": "data/raw/sample.txt",
+          "file_type": "txt",
+          "page": null
+        },
+        {
+          "chunk_id": "3",
+          "score": 0.46013614535331726,
+          "content": "c tests.\nThe next step is document loading.",
+          "source": "data/raw/sample.txt",
+          "file_type": "txt",
+          "page": null
+        }
+      ],
+      "top_score": 0.48634466528892517,
+      "matched_keywords": [],
+      "expected_keywords": [
+        "/health",
+        "/version"
+      ],
+      "keyword_hit_count": 0,
+      "expected_source": "README.md",
+      "source_hit": false
+    },
+    {
+      "id": "q002",
+      "query": "项目当前版本是多少？",
+      "case_type": "boundary_case",
+      "note": "当前 README 尚未进入向量索引，用于验证系统边界",
+      "answer": "这是基于检索片段生成的简化回答：c tests.\nThe next step is document loading.",
+      "retrieved_chunks": [
+        {
+          "chunk_id": "3",
+          "score": 0.43036550283432007,
+          "content": "c tests.\nThe next step is document loading.",
+          "source": "data/raw/sample.txt",
+          "file_type": "txt",
+          "page": null
+        },
+        {
+          "chunk_id": "2",
+          "score": 0.4211826026439667,
+          "content": "tAPI skeleton, config, logging, and basic tests.\nT",
+          "source": "data/raw/sample.txt",
+          "file_type": "txt",
+          "page": null
+        },
+        {
+          "chunk_id": "1",
+          "score": 0.41481322050094604,
+          "content": "ering project.\nIt currently supports FastAPI skele",
+          "source": "data/raw/sample.txt",
+          "file_type": "txt",
+          "page": null
+        }
+      ],
+      "top_score": 0.43036550283432007,
+      "matched_keywords": [],
+      "expected_keywords": [
+        "0.1.0"
+      ],
+      "keyword_hit_count": 0,
+      "expected_source": "README.md",
+      "source_hit": false
+    },
+    {
+      "id": "q003",
+      "query": "RAGHub 当前下一步是什么？",
+      "case_type": "in_corpus",
+      "note": "当前索引语料内的问题",
+      "answer": "这是基于检索片段生成的简化回答：RAGHub is a local document question answering proj",
+      "retrieved_chunks": [
+        {
+          "chunk_id": "0",
+          "score": 0.6070005297660828,
+          "content": "RAGHub is a local document question answering proj",
+          "source": "data/raw/sample.txt",
+          "file_type": "txt",
+          "page": null
+        },
+        {
+          "chunk_id": "4",
+          "score": 0.48949873447418213,
+          "content": "RAGHub PDF loader sample. \n \nThis PDF file is used",
+          "source": "data/raw/sample.pdf",
+          "file_type": "pdf",
+          "page": 1
+        },
+        {
+          "chunk_id": "5",
+          "score": 0.37390023469924927,
+          "content": "le is used to test document loading. \n \nThe next s",
+          "source": "data/raw/sample.pdf",
+          "file_type": "pdf",
+          "page": 1
+        }
+      ],
+      "top_score": 0.6070005297660828,
+      "matched_keywords": [
+        "document loading"
+      ],
+      "expected_keywords": [
+        "next step",
+        "document loading"
+      ],
+      "keyword_hit_count": 1,
+      "expected_source": "data/raw/sample.txt",
+      "source_hit": true
+    },
+    {
+      "id": "q004",
+      "query": "PDF loader 当前支持什么处理方式？",
+      "case_type": "in_corpus",
+      "note": "当前索引语料内的问题",
+      "answer": "这是基于检索片段生成的简化回答：RAGHub PDF loader sample. \n \nThis PDF file is used",
+      "retrieved_chunks": [
+        {
+          "chunk_id": "4",
+          "score": 0.6776376366615295,
+          "content": "RAGHub PDF loader sample. \n \nThis PDF file is used",
+          "source": "data/raw/sample.pdf",
+          "file_type": "pdf",
+          "page": 1
+        },
+        {
+          "chunk_id": "6",
+          "score": 0.5012929439544678,
+          "content": "The next step is page-based PDF text extraction. ",
+          "source": "data/raw/sample.pdf",
+          "file_type": "pdf",
+          "page": 1
+        },
+        {
+          "chunk_id": "5",
+          "score": 0.4540741741657257,
+          "content": "le is used to test document loading. \n \nThe next s",
+          "source": "data/raw/sample.pdf",
+          "file_type": "pdf",
+          "page": 1
+        }
+      ],
+      "top_score": 0.6776376366615295,
+      "matched_keywords": [
+        "page-based",
+        "PDF",
+        "text extraction"
+      ],
+      "expected_keywords": [
+        "page-based",
+        "PDF",
+        "text extraction"
+      ],
+      "keyword_hit_count": 3,
+      "expected_source": "data/raw/sample.pdf",
+      "source_hit": true
+    },
+    {
+      "id": "q005",
+      "query": "RAGHub 是什么类型的项目？",
+      "case_type": "in_corpus",
+      "note": "当前索引语料内的问题",
+      "answer": "这是基于检索片段生成的简化回答：RAGHub is a local document question answering proj",
+      "retrieved_chunks": [
+        {
+          "chunk_id": "0",
+          "score": 0.5783564448356628,
+          "content": "RAGHub is a local document question answering proj",
+          "source": "data/raw/sample.txt",
+          "file_type": "txt",
+          "page": null
+        },
+        {
+          "chunk_id": "4",
+          "score": 0.43238365650177,
+          "content": "RAGHub PDF loader sample. \n \nThis PDF file is used",
+          "source": "data/raw/sample.pdf",
+          "file_type": "pdf",
+          "page": 1
+        },
+        {
+          "chunk_id": "1",
+          "score": 0.4117761254310608,
+          "content": "ering project.\nIt currently supports FastAPI skele",
+          "source": "data/raw/sample.txt",
+          "file_type": "txt",
+          "page": null
+        }
+      ],
+      "top_score": 0.5783564448356628,
+      "matched_keywords": [
+        "RAGHub",
+        "local",
+        "document",
+        "question answering"
+      ],
+      "expected_keywords": [
+        "RAGHub",
+        "local",
+        "document",
+        "question answering"
+      ],
+      "keyword_hit_count": 4,
+      "expected_source": "data/raw/sample.txt",
+      "source_hit": true
+    },
+    {
+      "id": "q006",
+      "query": "RAGHub 当前支持哪些基础工程能力？",
+      "case_type": "in_corpus",
+      "note": "当前索引语料内的问题",
+      "answer": "这是基于检索片段生成的简化回答：RAGHub is a local document question answering proj",
+      "retrieved_chunks": [
+        {
+          "chunk_id": "0",
+          "score": 0.5516541004180908,
+          "content": "RAGHub is a local document question answering proj",
+          "source": "data/raw/sample.txt",
+          "file_type": "txt",
+          "page": null
+        },
+        {
+          "chunk_id": "4",
+          "score": 0.4249475300312042,
+          "content": "RAGHub PDF loader sample. \n \nThis PDF file is used",
+          "source": "data/raw/sample.pdf",
+          "file_type": "pdf",
+          "page": 1
+        },
+        {
+          "chunk_id": "1",
+          "score": 0.4192044734954834,
+          "content": "ering project.\nIt currently supports FastAPI skele",
+          "source": "data/raw/sample.txt",
+          "file_type": "txt",
+          "page": null
+        }
+      ],
+      "top_score": 0.5516541004180908,
+      "matched_keywords": [
+        "FastAPI"
+      ],
+      "expected_keywords": [
+        "FastAPI",
+        "config",
+        "logging",
+        "tests"
+      ],
+      "keyword_hit_count": 1,
+      "expected_source": "data/raw/sample.txt",
+      "source_hit": true
+    },
+    {
+      "id": "q007",
+      "query": "RAGHub 样本文档里提到下一步是什么？",
+      "case_type": "in_corpus",
+      "note": "当前索引语料内的问题",
+      "answer": "这是基于检索片段生成的简化回答：RAGHub is a local document question answering proj",
+      "retrieved_chunks": [
+        {
+          "chunk_id": "0",
+          "score": 0.5964125990867615,
+          "content": "RAGHub is a local document question answering proj",
+          "source": "data/raw/sample.txt",
+          "file_type": "txt",
+          "page": null
+        },
+        {
+          "chunk_id": "4",
+          "score": 0.56020587682724,
+          "content": "RAGHub PDF loader sample. \n \nThis PDF file is used",
+          "source": "data/raw/sample.pdf",
+          "file_type": "pdf",
+          "page": 1
+        },
+        {
+          "chunk_id": "6",
+          "score": 0.49137628078460693,
+          "content": "The next step is page-based PDF text extraction. ",
+          "source": "data/raw/sample.pdf",
+          "file_type": "pdf",
+          "page": 1
+        }
+      ],
+      "top_score": 0.5964125990867615,
+      "matched_keywords": [
+        "next step"
+      ],
+      "expected_keywords": [
+        "next step",
+        "document loading"
+      ],
+      "keyword_hit_count": 1,
+      "expected_source": "data/raw/sample.txt",
+      "source_hit": true
+    },
+    {
+      "id": "q008",
+      "query": "PDF loader 的样本文档用途是什么？",
+      "case_type": "in_corpus",
+      "note": "当前索引语料内的问题",
+      "answer": "这是基于检索片段生成的简化回答：RAGHub PDF loader sample. \n \nThis PDF file is used",
+      "retrieved_chunks": [
+        {
+          "chunk_id": "4",
+          "score": 0.6724008321762085,
+          "content": "RAGHub PDF loader sample. \n \nThis PDF file is used",
+          "source": "data/raw/sample.pdf",
+          "file_type": "pdf",
+          "page": 1
+        },
+        {
+          "chunk_id": "6",
+          "score": 0.5142688751220703,
+          "content": "The next step is page-based PDF text extraction. ",
+          "source": "data/raw/sample.pdf",
+          "file_type": "pdf",
+          "page": 1
+        },
+        {
+          "chunk_id": "5",
+          "score": 0.48195022344589233,
+          "content": "le is used to test document loading. \n \nThe next s",
+          "source": "data/raw/sample.pdf",
+          "file_type": "pdf",
+          "page": 1
+        }
+      ],
+      "top_score": 0.6724008321762085,
+      "matched_keywords": [
+        "PDF",
+        "loader",
+        "sample",
+        "test document loading"
+      ],
+      "expected_keywords": [
+        "PDF",
+        "loader",
+        "sample",
+        "test document loading"
+      ],
+      "keyword_hit_count": 4,
+      "expected_source": "data/raw/sample.pdf",
+      "source_hit": true
+    },
+    {
+      "id": "q009",
+      "query": "PDF loader 下一步计划支持什么提取方式？",
+      "case_type": "in_corpus",
+      "note": "当前索引语料内的问题",
+      "answer": "这是基于检索片段生成的简化回答：RAGHub PDF loader sample. \n \nThis PDF file is used",
+      "retrieved_chunks": [
+        {
+          "chunk_id": "4",
+          "score": 0.6393053531646729,
+          "content": "RAGHub PDF loader sample. \n \nThis PDF file is used",
+          "source": "data/raw/sample.pdf",
+          "file_type": "pdf",
+          "page": 1
+        },
+        {
+          "chunk_id": "6",
+          "score": 0.5627071857452393,
+          "content": "The next step is page-based PDF text extraction. ",
+          "source": "data/raw/sample.pdf",
+          "file_type": "pdf",
+          "page": 1
+        },
+        {
+          "chunk_id": "5",
+          "score": 0.4728812873363495,
+          "content": "le is used to test document loading. \n \nThe next s",
+          "source": "data/raw/sample.pdf",
+          "file_type": "pdf",
+          "page": 1
+        }
+      ],
+      "top_score": 0.6393053531646729,
+      "matched_keywords": [
+        "page-based",
+        "PDF",
+        "text extraction"
+      ],
+      "expected_keywords": [
+        "page-based",
+        "PDF",
+        "text extraction"
+      ],
+      "keyword_hit_count": 3,
+      "expected_source": "data/raw/sample.pdf",
+      "source_hit": true
+    }
+  ]
+}

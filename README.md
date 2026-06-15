@@ -644,14 +644,62 @@ le is used to test document loading.
 
 ---
 
-## Evaluation Placeholders
+## Evaluation
 
-当前 `eval/queries.jsonl` 保存最小评测占位样例。
+当前已新增最小 RAG eval 流程，用于检查 `/chat` 链路返回的回答和检索片段是否大致命中预期。
 
-Week 1 已包含基础接口相关问题。  
-Week 2 新增了基于样本文档内容的占位问题，用于后续检索评测扩展。
+运行方式：
 
-当前仍不是正式评测集，只作为后续检索命中测试和问答评测的最小起点。
+```bash
+python scripts/run_eval.py
+```
+
+输入文件：
+
+```text
+eval/queries.jsonl
+```
+
+该文件保存最小问题集，每条样例包含：
+
+- `id`
+- `query`
+- `expected_keywords`
+- `expected_source`
+- `case_type`
+- `note`
+
+输出文件：
+
+```text
+eval/results.json
+```
+
+该文件记录每条 query 的：
+
+- `answer`
+- `retrieved_chunks`
+- `top_score`
+- `matched_keywords`
+- `keyword_hit_count`
+- `source_hit`
+
+控制台会输出简短 summary，包括 all cases、in-corpus cases 和 boundary cases 的 source 命中数量与 keyword 命中数量。
+
+当前评测边界：
+
+- 这是小样本、规则化、人工辅助判断的最小 eval。
+- eval 包含主评测样例和边界案例；边界案例用于暴露当前索引范围限制，不应直接视为普通检索失败。
+- 当前使用 mock LLM client，不调用外部大模型 API。
+- eval 会走真实 embedding 检索，首次运行可能因为模型加载或下载而较慢。
+- 当前向量数据只来自 `chunks_preview.jsonl`，README 中的项目说明还没有进入检索索引。
+- keyword 命中只能作为粗粒度信号，不能代表完整回答质量。
+
+后续增强方向：
+
+- 扩展更多问题集和不同来源文档。
+- 增加自动化指标，例如 source hit rate、keyword hit rate、answer 引用覆盖率。
+- 持续沉淀失败案例，分析召回失败和回答不足的原因。
 
 ---
 

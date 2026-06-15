@@ -1,5 +1,9 @@
-{"id": "q1", "query": "项目当前支持哪些接口？", "expected_answer": "当前支持 /health 和 /version 接口。", "source": "manual", "note": "week1 placeholder"}
-{"id": "q2", "query": "项目当前版本是多少？", "expected_answer": "0.1.0", "source": "manual", "note": "week1 placeholder"}
-{"id": "q3", "query": "RAGHub 当前下一步是什么？", "expected_answer": "document loading", "source": "sample.txt", "note": "week2 placeholder"}
-{"id": "q4", "query": "PDF loader 当前支持什么处理方式？", "expected_answer": "page-based PDF text extraction", "source": "sample.pdf", "note": "week2 placeholder"}
-
+{"id": "q001", "query": "项目当前支持哪些接口？", "expected_keywords": ["/health", "/version"], "expected_source": "README.md", "case_type": "boundary_case", "note": "当前 README 尚未进入向量索引，用于验证系统边界"}
+{"id": "q002", "query": "项目当前版本是多少？", "expected_keywords": ["0.1.0"], "expected_source": "README.md", "case_type": "boundary_case", "note": "当前 README 尚未进入向量索引，用于验证系统边界"}
+{"id": "q003", "query": "RAGHub 当前下一步是什么？", "expected_keywords": ["next step", "document loading"], "expected_source": "data/raw/sample.txt", "case_type": "in_corpus", "note": "当前索引语料内的问题"}
+{"id": "q004", "query": "PDF loader 当前支持什么处理方式？", "expected_keywords": ["page-based", "PDF", "text extraction"], "expected_source": "data/raw/sample.pdf", "case_type": "in_corpus", "note": "当前索引语料内的问题"}
+{"id": "q005", "query": "RAGHub 是什么类型的项目？", "expected_keywords": ["RAGHub", "local", "document", "question answering"], "expected_source": "data/raw/sample.txt", "case_type": "in_corpus", "note": "当前索引语料内的问题"}
+{"id": "q006", "query": "RAGHub 当前支持哪些基础工程能力？", "expected_keywords": ["FastAPI", "config", "logging", "tests"], "expected_source": "data/raw/sample.txt", "case_type": "in_corpus", "note": "当前索引语料内的问题"}
+{"id": "q007", "query": "RAGHub 样本文档里提到下一步是什么？", "expected_keywords": ["next step", "document loading"], "expected_source": "data/raw/sample.txt", "case_type": "in_corpus", "note": "当前索引语料内的问题"}
+{"id": "q008", "query": "PDF loader 的样本文档用途是什么？", "expected_keywords": ["PDF", "loader", "sample", "test document loading"], "expected_source": "data/raw/sample.pdf", "case_type": "in_corpus", "note": "当前索引语料内的问题"}
+{"id": "q009", "query": "PDF loader 下一步计划支持什么提取方式？", "expected_keywords": ["page-based", "PDF", "text extraction"], "expected_source": "data/raw/sample.pdf", "case_type": "in_corpus", "note": "当前索引语料内的问题"}
