@@ -39,10 +39,12 @@ RAG 回答需要可追溯性。source/page 能说明答案来自哪里，便于�
 ### 项目中的具体实现
 
 `RetrievedChunk` 返回 `source`、`file_type`、`page` 和 `score`。
+Day 16 后，`/chat` 额外返回 `sources`，其中包含 `content_preview`，用于面向用户展示引用证据。
 
 ### 后续可增强
 
 在 `/chat` answer 中增加引用编号和 source 列表。
+继续优化引用格式和 source 去重策略。
 
 ## Q：RAG 和普通 LLM 问答有什么区别？
 
@@ -255,10 +257,12 @@ mock LLM 能先稳定接口、prompt 和响应结构，避免 API key、网络�
 ### 项目中的具体实现
 
 mock LLM 在没有有效 chunk 时返回“资料不足”，API 返回 retrieved_chunks 供核查。
+Day 16 增加 `is_answerable` 和 `reason`，无 chunk 或低 score 时拒答。
 
 ### 后续可增强
 
 接真实 LLM 后加入 citation check 和 answer-grounding eval。
+通过更多 eval case 调整 no-answer 阈值。
 
 ## Q：后续如何接真实 LLM？
 
@@ -371,6 +375,7 @@ eval 会检查 retrieved_chunks 中是否包含 expected_source。
 ### 项目中的具体实现
 
 `docs/problems_and_solutions.md` 记录了问题、原因、解决方案和面试表达。
+`eval/bad_cases.md` 记录 README 未入索引、低相关 query 触发 no-answer、mock LLM 质量有限等 bad case。
 
 ### 后续可增强
 

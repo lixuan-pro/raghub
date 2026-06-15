@@ -1,13 +1,21 @@
-INSUFFICIENT_ANSWER = "资料不足，无法基于当前文档回答。"
+NO_ANSWER_TEXT = "当前知识库中没有找到足够依据回答该问题。"
 
 
-def generate_mock_answer(prompt: str, chunks: list[dict]) -> str:
+def generate_mock_answer(
+    prompt: str,
+    chunks: list[dict],
+    is_answerable: bool = True,
+    reason: str = "",
+) -> str:
+    if not is_answerable:
+        return NO_ANSWER_TEXT
+
     valid_chunks = [
         chunk for chunk in chunks if (chunk.get("content") or "").strip()
     ]
 
     if not valid_chunks:
-        return INSUFFICIENT_ANSWER
+        return NO_ANSWER_TEXT
 
     first_content = valid_chunks[0]["content"].strip()
     summary = first_content[:160]

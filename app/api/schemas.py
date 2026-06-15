@@ -32,7 +32,19 @@ class ChatRequest(RetrieveRequest):
     pass
 
 
+class ChatSource(BaseModel):
+    chunk_id: str
+    source: str
+    file_type: str
+    page: int | None = None
+    score: float
+    content_preview: str
+
+
 class ChatResponse(BaseModel):
     query: str
     answer: str
+    is_answerable: bool
+    reason: str
+    sources: list[ChatSource]
     retrieved_chunks: list[RetrievedChunk]

@@ -15,6 +15,7 @@ def build_rag_prompt(query: str, chunks: list[dict]) -> str:
         "你是 RAGHub 的问答助手。\n"
         "只能基于给定资料回答用户问题。\n"
         "如果资料不足，请明确说明资料不足，无法基于当前文档回答。\n\n"
+        "如果系统判定检索证据不足，应拒答而不是强行生成答案。\n\n"
         f"用户问题：{query}\n\n"
         f"检索资料：\n{context}\n\n"
         "请给出简洁回答。"

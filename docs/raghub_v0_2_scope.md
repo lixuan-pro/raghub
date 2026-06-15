@@ -64,6 +64,12 @@ TXT/PDF
 
 输入 query 和 top_k，复用检索结果构造 RAG prompt，调用 mock LLM client 返回 answer 和 retrieved chunks。
 
+Day 16 起，`/chat` 还返回：
+
+- `sources`：用于展示引用证据的片段摘要
+- `is_answerable`：是否有足够检索证据回答
+- `reason`：可回答或拒答原因
+
 ## 5. 当前 eval 能力
 
 当前 eval 使用 `eval/queries.jsonl` 作为最小问题集，运行：
@@ -94,6 +100,7 @@ eval/results.json
 - 当前索引只来自 `chunks_preview.jsonl` 和 `chunk_embeddings.npy`。
 - README 和 API 文档尚未进入向量索引。
 - eval 是小样本、规则化、人工辅助判断。
+- 当前已记录 `eval/bad_cases.md`，用于沉淀 README 未入索引、低相关 query 拒答、mock LLM 质量有限等 bad case。
 - 当前不是生产级 RAG 平台。
 
 ## 7. 合理 Roadmap
@@ -105,6 +112,8 @@ eval/results.json
 - 将 README、设计文档和更多业务文档纳入索引
 - 增加更系统的 eval
 - 记录失败案例并做召回分析
+- 基于更多 eval case 调整 no-answer 阈值
+- 用真实 LLM provider 替换 mock LLM
 - 增加 Docker 部署
 
 ## 8. 当前不做清单

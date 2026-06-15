@@ -77,6 +77,7 @@ uvicorn app.main:app --reload
 ```
 
 `/chat` 返回 `answer` 和 `retrieved_chunks`，其中 `retrieved_chunks` 保留 `source`、`page`、`score`，便于解释回答来源。
+Day 16 起，`/chat` 还会返回 `sources`、`is_answerable` 和 `reason`，用于展示引用证据和无答案拒答原因。
 
 ## Eval Snapshot
 
@@ -732,6 +733,18 @@ le is used to test document loading.
 {
   "query": "RAGHub 当前支持哪些文档处理能力？",
   "answer": "这是基于检索片段生成的简化回答：...",
+  "is_answerable": true,
+  "reason": "retrieval_evidence_found",
+  "sources": [
+    {
+      "chunk_id": "0",
+      "source": "data/raw/sample.txt",
+      "file_type": "txt",
+      "page": null,
+      "score": 0.83,
+      "content_preview": "..."
+    }
+  ],
   "retrieved_chunks": [
     {
       "chunk_id": "0",
@@ -757,6 +770,40 @@ le is used to test document loading.
 - 可接入 DeepSeek / OpenAI 等真实 LLM provider。
 - 可增加 streaming 输出。
 - 可增加更严格的 RAG eval、引用校验和失败案例分析。
+
+---
+
+## Citation and No-answer Strategy
+
+`POST /chat` 当前会返回引用证据和可回答性判断：
+
+- `sources`：面向用户展示的引用证据摘要。
+- `is_answerable`：当前检索结果是否足以支撑回答。
+- `reason`：可回答或拒答的原因。
+- `retrieved_chunks`：保留完整检索片段，用于调试和 eval。
+
+`sources` 中包含：
+
+- `chunk_id`
+- `source`
+- `file_type`
+- `page`
+- `score`
+- `content_preview`
+
+当前 v0.2 使用一个简单规则判断是否拒答：
+
+```text
+如果没有 retrieved_chunks -> no_retrieved_chunks
+如果 top_score < 0.2 -> retrieval_score_below_threshold
+否则 -> retrieval_evidence_found
+```
+
+无检索结果或低相关检索结果时，`/chat` 会返回类似“当前知识库中没有找到足够依据回答该问题”的拒答文本。
+
+当前阈值 `0.2` 是 v0.2 的经验规则，只用于最小可解释 no-answer 策略。后续需要通过更多 eval case、真实业务文档和真实 LLM 输出继续调优。
+
+当前仍然使用 mock LLM client，不代表真实大模型生成质量。
 
 ---
 
