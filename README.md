@@ -14,10 +14,11 @@ RAGHub 是一个面向本地文档的轻量级 RAG 应用后端系统，用于�
 - `POST /retrieve` 检索 API
 - `POST /chat` 最小 RAG API
 - mock LLM client
+- 可选 DeepSeek LLM provider
 - 最小 RAG eval
 - 项目问题沉淀与面试材料
 
-当前 `/chat` 使用 mock LLM client，不调用外部大模型 API。当前 eval 是小样本规则化评测，不是工业级自动评测系统。
+当前 `/chat` 默认使用 mock LLM client；如本地配置 `LLM_PROVIDER=deepseek` 和 `DEEPSEEK_API_KEY`，可选调用 DeepSeek。当前 eval 是小样本规则化评测，不是工业级自动评测系统。
 
 ## 核心链路
 
@@ -98,7 +99,7 @@ RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。
 
 当前不包含：
 
-- 真实 DeepSeek / OpenAI LLM API
+- 默认配置下不调用外部 LLM API
 - streaming / SSE
 - Agent 或工具调用
 - Qdrant / Milvus / pgvector
@@ -109,7 +110,7 @@ RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。
 
 ## 后续规划
 
-- 接入真实 DeepSeek / OpenAI LLM client
+- 继续完善 DeepSeek / OpenAI 等真实 LLM provider
 - 增加 streaming/SSE
 - 抽象 vector store interface
 - 接入 Qdrant 或 pgvector
@@ -131,7 +132,7 @@ RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步�
 - 将 chunks 转换为向量并保存为 `.npy`
 - 内存版向量相似度 top-k 检索 baseline
 
-当前已完成 FastAPI `/retrieve` 接口与最小 mock `/chat` 问答接口，暂未进入完整向量库、真实 LLM API、BM25、混合检索或生产级 RAG 生成阶段。
+当前已完成 FastAPI `/retrieve` 接口与最小 `/chat` 问答接口，`/chat` 默认使用 mock LLM，并支持可选 DeepSeek provider；暂未进入完整向量库、BM25、混合检索或生产级 RAG 生成阶段。
 
 ---
 
@@ -716,7 +717,7 @@ le is used to test document loading.
 
 ## Chat API
 
-当前已新增 `POST /chat` 接口，用于把用户 query 交给检索服务，基于召回 chunks 构造 RAG prompt，并通过 mock LLM client 返回最小问答结果。
+当前已新增 `POST /chat` 接口，用于把用户 query 交给检索服务，基于召回 chunks 构造 RAG prompt，并通过配置化 LLM client 返回最小问答结果。默认 provider 是 mock，也可以通过环境变量切换到 DeepSeek。
 
 请求示例：
 
@@ -760,18 +761,43 @@ le is used to test document loading.
 
 当前边界：
 
-- 当前使用 mock LLM client，不调用外部大模型 API。
+- 默认使用 mock LLM client；仅当显式配置 `LLM_PROVIDER=deepseek` 和 `DEEPSEEK_API_KEY` 时才调用 DeepSeek。
 - `/chat` 复用 Day 12 的内存版 `/retrieve` 检索链路。
 - 当前不支持 streaming、Agent、工具调用、复杂 prompt 模板或多轮对话。
 - 如果没有有效检索片段，会返回资料不足提示。
 
 后续增强方向：
 
-- 可接入 DeepSeek / OpenAI 等真实 LLM provider。
+- 可继续完善 DeepSeek / OpenAI 等真实 LLM provider 的错误处理、超时和流式输出。
 - 可增加 streaming 输出。
 - 可增加更严格的 RAG eval、引用校验和失败案例分析。
 
 ---
+
+## 可选真实 LLM：DeepSeek
+
+Day 17 起，`/chat` 支持通过配置切换 LLM provider。默认仍然是 `mock`，不会调用外部大模型 API，便于本地测试和面试演示。
+
+如果本地需要验证 DeepSeek，可以复制 `.env.example` 并配置：
+
+```env
+LLM_PROVIDER=deepseek
+DEEPSEEK_API_KEY=your_deepseek_api_key
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-v4-flash
+```
+
+也可以运行：
+
+```powershell
+python scripts\chat_deepseek_demo.py
+```
+
+注意：
+- 不要把真实 `DEEPSEEK_API_KEY` 提交到 Git。
+- 缺少 `DEEPSEEK_API_KEY` 时，demo 会提示并跳过真实调用。
+- 当 `/chat` 判断为 no-answer 时，不会调用真实 LLM，只返回本地拒答文案。
+- 当前 DeepSeek 接入只是可选 provider，不代表 RAGHub 已经是生产级 RAG 系统。
 
 ## Citation and No-answer Strategy
 
@@ -803,7 +829,7 @@ le is used to test document loading.
 
 当前阈值 `0.2` 是 v0.2 的经验规则，只用于最小可解释 no-answer 策略。后续需要通过更多 eval case、真实业务文档和真实 LLM 输出继续调优。
 
-当前仍然使用 mock LLM client，不代表真实大模型生成质量。
+默认仍然使用 mock LLM client；可选 DeepSeek provider 只用于本地验证真实 LLM 链路，不代表生产级生成质量。
 
 ---
 
@@ -853,7 +879,7 @@ eval/results.json
 
 - 这是小样本、规则化、人工辅助判断的最小 eval。
 - eval 包含主评测样例和边界案例；边界案例用于暴露当前索引范围限制，不应直接视为普通检索失败。
-- 当前使用 mock LLM client，不调用外部大模型 API。
+- 默认使用 mock LLM client；DeepSeek 仅作为可选 provider，需要本地环境变量配置。
 - eval 会走真实 embedding 检索，首次运行可能因为模型加载或下载而较慢。
 - 当前向量数据只来自 `chunks_preview.jsonl`，README 中的项目说明还没有进入检索索引。
 - keyword 命中只能作为粗粒度信号，不能代表完整回答质量。
@@ -953,7 +979,7 @@ python -m pytest
 
 4. 后续逐步实现
    - 检索评测扩展
-   - 接入真实 LLM 的 RAG 问答接口
+   - 完善真实 LLM provider 的 RAG 问答接口
    - 回答引用来源
    - 失败案例整理
    - README / Demo / 简历 / 论文材料完善
@@ -976,7 +1002,7 @@ python -m pytest
 - 完整向量数据库
 - BM25 / hybrid retrieval
 - rerank
-- 真实 LLM RAG 问答接口
+- 生产级真实 LLM RAG 问答接口
 - 前端页面
 - Docker 部署
 

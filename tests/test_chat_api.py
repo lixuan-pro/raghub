@@ -19,10 +19,15 @@ def make_chunk(score: float = 0.83) -> dict:
 
 
 def test_chat_returns_answer_sources_and_retrieved_chunks(monkeypatch):
+    class FakeLLMClient:
+        def generate(self, prompt: str) -> str:
+            return "fake llm answer"
+
     def fake_retrieve_chunks(query: str, top_k: int = 3):
         return [make_chunk(score=0.83)]
 
     monkeypatch.setattr(rag_service, "retrieve_chunks", fake_retrieve_chunks)
+    monkeypatch.setattr(rag_service, "get_llm_client", lambda: FakeLLMClient())
 
     response = client.post(
         "/chat",
@@ -52,6 +57,23 @@ def test_chat_returns_answer_sources_and_retrieved_chunks(monkeypatch):
     assert source["content_preview"] == "RAGHub supports TXT and PDF loading."
 
 
+def test_chat_calls_llm_when_answerable(monkeypatch):
+    class FakeLLMClient:
+        def generate(self, prompt: str) -> str:
+            return "fake llm answer"
+
+    def fake_retrieve_chunks(query: str, top_k: int = 3):
+        return [make_chunk(score=0.83)]
+
+    monkeypatch.setattr(rag_service, "retrieve_chunks", fake_retrieve_chunks)
+    monkeypatch.setattr(rag_service, "get_llm_client", lambda: FakeLLMClient())
+
+    response = client.post("/chat", json={"query": "RAGHub", "top_k": 3})
+
+    assert response.status_code == 200
+    assert response.json()["answer"] == "fake llm answer"
+
+
 def test_chat_rejects_empty_query():
     response = client.post("/chat", json={"query": "", "top_k": 3})
 
@@ -65,10 +87,14 @@ def test_chat_rejects_top_k_above_limit():
 
 
 def test_chat_returns_no_answer_when_no_chunks(monkeypatch):
+    def fail_get_llm_client():
+        raise AssertionError("LLM client should not be called")
+
     def fake_retrieve_chunks(query: str, top_k: int = 3):
         return []
 
     monkeypatch.setattr(rag_service, "retrieve_chunks", fake_retrieve_chunks)
+    monkeypatch.setattr(rag_service, "get_llm_client", fail_get_llm_client)
 
     response = client.post("/chat", json={"query": "Unknown topic", "top_k": 3})
 
@@ -83,10 +109,14 @@ def test_chat_returns_no_answer_when_no_chunks(monkeypatch):
 
 
 def test_chat_returns_no_answer_when_score_below_threshold(monkeypatch):
+    def fail_get_llm_client():
+        raise AssertionError("LLM client should not be called")
+
     def fake_retrieve_chunks(query: str, top_k: int = 3):
         return [make_chunk(score=0.05)]
 
     monkeypatch.setattr(rag_service, "retrieve_chunks", fake_retrieve_chunks)
+    monkeypatch.setattr(rag_service, "get_llm_client", fail_get_llm_client)
 
     response = client.post("/chat", json={"query": "Weakly related question", "top_k": 3})
 

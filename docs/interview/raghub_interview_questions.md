@@ -224,15 +224,15 @@ cosine similarity 衡量向量方向相似度，适合比较归一化后的语�
 
 ### 回答要点
 
-mock LLM 能先稳定接口、prompt 和响应结构，避免 API key、网络、费用影响开发。
+mock LLM 能先稳定接口、prompt 和响应结构，避免 API key、网络、费用影响日常开发和测试。
 
 ### 项目中的具体实现
 
-`app/llm/mock_client.py` 基于 retrieved chunks 生成简化回答。
+`app/llm/mock_client.py` 仍是默认 provider，基于 retrieved chunks 生成简化回答；Day 17 增加了可选 DeepSeek provider。
 
 ### 后续可增强
 
-接入 DeepSeek 或 OpenAI provider。
+继续完善 DeepSeek provider，并可增加 OpenAI provider、超时重试和调用日志。
 
 ## Q：Prompt 里最重要的约束是什么？
 
@@ -264,19 +264,19 @@ Day 16 增加 `is_answerable` 和 `reason`，无 chunk 或低 score 时拒答。
 接真实 LLM 后加入 citation check 和 answer-grounding eval。
 通过更多 eval case 调整 no-answer 阈值。
 
-## Q：后续如何接真实 LLM？
+## Q：RAGHub 现在如何接入真实 LLM？
 
 ### 回答要点
 
-把 mock client 替换成 provider interface，保留 rag_service 的编排逻辑。
+把 mock client 抽象成 provider interface，保留 rag_service 的编排逻辑；默认仍走 mock，需要时通过环境变量切换到 DeepSeek。
 
 ### 项目中的具体实现
 
-当前 `rag_service.py` 只依赖 `generate_mock_answer()`，替换点清晰。
+当前新增 `app/llm/base.py`、`app/llm/client_factory.py` 和 `app/llm/deepseek_client.py`。`rag_service.py` 只调用 `get_llm_client().generate(prompt)`，no-answer 分支不会调用真实 LLM。
 
 ### 后续可增强
 
-新增 `DeepSeekClient`、`OpenAIClient` 和配置化 provider。
+后续可以继续增加 OpenAI provider、超时重试、streaming、调用日志和更严格的 answer-grounding eval。
 
 ## Q：后续如何支持 streaming？
 

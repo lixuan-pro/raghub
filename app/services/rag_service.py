@@ -1,4 +1,5 @@
-from app.llm.mock_client import generate_mock_answer
+from app.llm.client_factory import get_llm_client
+from app.llm.mock_client import NO_ANSWER_TEXT
 from app.prompts.rag_prompt import build_rag_prompt
 from app.services.retrieve_service import retrieve_chunks
 
@@ -42,13 +43,12 @@ def build_sources(chunks: list[dict]) -> list[dict]:
 def generate_chat_response(query: str, top_k: int = 3) -> dict:
     chunks = retrieve_chunks(query=query, top_k=top_k)
     is_answerable, reason = assess_answerability(chunks)
-    prompt = build_rag_prompt(query=query, chunks=chunks)
-    answer = generate_mock_answer(
-        prompt=prompt,
-        chunks=chunks,
-        is_answerable=is_answerable,
-        reason=reason,
-    )
+
+    if is_answerable:
+        prompt = build_rag_prompt(query=query, chunks=chunks)
+        answer = get_llm_client().generate(prompt)
+    else:
+        answer = NO_ANSWER_TEXT
 
     return {
         "query": query,

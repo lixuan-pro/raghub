@@ -1,6 +1,21 @@
 NO_ANSWER_TEXT = "当前知识库中没有找到足够依据回答该问题。"
 
 
+class MockLLMClient:
+    def generate(self, prompt: str) -> str:
+        marker = "检索资料："
+        context = prompt.split(marker, maxsplit=1)[-1].strip()
+        context_lines = [line.strip() for line in context.splitlines() if line.strip()]
+        content_lines = [
+            line
+            for line in context_lines
+            if not line.startswith("[") and not line.startswith("请")
+        ]
+        summary = content_lines[0][:160] if content_lines else ""
+
+        return f"这是基于检索片段生成的简化回答：{summary}"
+
+
 def generate_mock_answer(
     prompt: str,
     chunks: list[dict],
@@ -17,10 +32,4 @@ def generate_mock_answer(
     if not valid_chunks:
         return NO_ANSWER_TEXT
 
-    first_content = valid_chunks[0]["content"].strip()
-    summary = first_content[:160]
-
-    return (
-        "这是基于检索片段生成的简化回答："
-        f"{summary}"
-    )
+    return MockLLMClient().generate(prompt)

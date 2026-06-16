@@ -17,6 +17,7 @@ RAGHub v0.2 是一个面向本地文档的轻量级 RAG 应用后端系统。它
 - `POST /retrieve`
 - `POST /chat`
 - mock LLM client
+- 可选 DeepSeek LLM provider
 - 最小 RAG eval
 - 问题沉淀文档
 - 面试材料和项目讲解材料
@@ -34,7 +35,7 @@ TXT/PDF
 -> vector_retriever
 -> /retrieve
 -> rag_service
--> mock LLM
+-> LLM client，默认 mock，可选 DeepSeek
 -> /chat
 -> run_eval.py
 ```
@@ -62,7 +63,7 @@ TXT/PDF
 
 ### POST /chat
 
-输入 query 和 top_k，复用检索结果构造 RAG prompt，调用 mock LLM client 返回 answer 和 retrieved chunks。
+输入 query 和 top_k，复用检索结果构造 RAG prompt，调用配置化 LLM client 返回 answer 和 retrieved chunks。默认 provider 是 mock，可选 provider 是 DeepSeek。
 
 Day 16 起，`/chat` 还返回：
 
@@ -96,7 +97,7 @@ eval/results.json
 
 ## 6. 当前边界
 
-- `/chat` 使用 mock LLM client，不调用真实外部大模型。
+- `/chat` 默认使用 mock LLM client；只有显式配置 `LLM_PROVIDER=deepseek` 和 `DEEPSEEK_API_KEY` 时才调用 DeepSeek。
 - 当前索引只来自 `chunks_preview.jsonl` 和 `chunk_embeddings.npy`。
 - README 和 API 文档尚未进入向量索引。
 - eval 是小样本、规则化、人工辅助判断。
@@ -105,7 +106,7 @@ eval/results.json
 
 ## 7. 合理 Roadmap
 
-- 接入真实 DeepSeek / OpenAI LLM client
+- 继续完善 DeepSeek / OpenAI LLM provider
 - 增加 streaming / SSE
 - 抽象 vector store interface
 - 接入 Qdrant 或 pgvector
@@ -113,7 +114,7 @@ eval/results.json
 - 增加更系统的 eval
 - 记录失败案例并做召回分析
 - 基于更多 eval case 调整 no-answer 阈值
-- 用真实 LLM provider 替换 mock LLM
+- 完善真实 LLM provider 的错误处理、超时、日志和质量评估
 - 增加 Docker 部署
 
 ## 8. 当前不做清单
@@ -139,4 +140,4 @@ eval/results.json
 - `/chat` 负责组织 RAG 闭环
 - eval 负责观察质量和边界
 
-面试时可以强调：我先用最小可控实现打通主链路，再逐步替换真实 LLM、向量数据库和更系统的 eval。
+面试时可以强调：我先用最小可控实现打通主链路，再把 LLM provider 做成可配置能力，后续继续完善真实 LLM、向量数据库和更系统的 eval。
