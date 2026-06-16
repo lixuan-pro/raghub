@@ -93,6 +93,8 @@ boundary_case_total: 2
 
 `boundary_case` 用于暴露当前索引范围限制，例如 README 尚未进入向量索引。
 
+Day 18 已补充真实 DeepSeek 回答质量小样本人工评审：`eval/llm_answer_review.md`。
+
 ## 当前边界
 
 RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。

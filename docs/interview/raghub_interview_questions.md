@@ -302,7 +302,7 @@ Day 16 增加 `is_answerable` 和 `reason`，无 chunk 或低 score 时拒答。
 
 ### 项目中的具体实现
 
-`scripts/run_eval.py` 读取 `eval/queries.jsonl`，输出 `eval/results.json`。
+`scripts/run_eval.py` 读取 `eval/queries.jsonl`，输出 `eval/results.json`。Day 18 增加 `eval/llm_answer_review.md`，记录真实 DeepSeek 回答质量的小样本人工评审。
 
 ### 后续可增强
 

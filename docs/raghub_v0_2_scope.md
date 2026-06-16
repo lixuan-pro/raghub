@@ -95,6 +95,8 @@ eval/results.json
 
 其中 `boundary_case` 用于标记当前索引范围外的问题，例如 README 尚未进入向量索引。
 
+Day 18 已补充 `eval/llm_answer_review.md`，用于记录真实 DeepSeek provider 的小样本回答质量人工评审。
+
 ## 6. 当前边界
 
 - `/chat` 默认使用 mock LLM client；只有显式配置 `LLM_PROVIDER=deepseek` 和 `DEEPSEEK_API_KEY` 时才调用 DeepSeek。
