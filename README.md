@@ -40,7 +40,7 @@ data/processed/chunks_preview.jsonl
 data/processed/chunk_embeddings.npy
 ```
 
-README/API 文档本身尚未进入向量索引，因此 README/API 相关 eval 问题被标记为 `boundary_case`。
+Day 19 起，索引语料已从 sample TXT/PDF 扩展到 README、核心 docs 和 eval 评审文档；README/API 相关问题不再作为默认 `boundary_case`。
 
 ## 快速运行
 
@@ -85,15 +85,17 @@ Day 16 起，`/chat` 还会返回 `sources`、`is_answerable` 和 `reason`，用
 当前最小 eval 结果：
 
 ```text
-total: 9
-all_source_hits: 7/9
-in_corpus_source_hits: 7/7
-boundary_case_total: 2
+all_total: 11
+all_source_hits: 6/9
+in_corpus_total: 9
+out_of_corpus_total: 2
 ```
 
-`boundary_case` 用于暴露当前索引范围限制，例如 README 尚未进入向量索引。
+`out_of_corpus` 用于观察当前知识库之外的问题，例如作者手机号、未来线上用户量等。
 
 Day 18 已补充真实 DeepSeek 回答质量小样本人工评审：`eval/llm_answer_review.md`。
+
+Day 19 已将 README、核心 docs 和 eval 文档纳入索引；后续需要基于新索引重新进行一轮 LLM answer review。
 
 ## 当前边界
 

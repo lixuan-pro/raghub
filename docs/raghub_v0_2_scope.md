@@ -13,6 +13,7 @@ RAGHub v0.2 是一个面向本地文档的轻量级 RAG 应用后端系统。它
 - chunk 预览文件 `chunks_preview.jsonl`
 - 本地 embedding baseline
 - chunk 向量矩阵 `chunk_embeddings.npy`
+- README、核心 docs 和 eval 文档索引语料
 - 内存版 cosine similarity top-k 检索
 - `POST /retrieve`
 - `POST /chat`
@@ -93,17 +94,19 @@ eval/results.json
 - keyword hit
 - boundary case notes
 
-其中 `boundary_case` 用于标记当前索引范围外的问题，例如 README 尚未进入向量索引。
+Day 19 起，README/API 相关问题已调整为 `in_corpus`；真正缺少知识来源的问题使用 `out_of_corpus` 标记。
 
 Day 18 已补充 `eval/llm_answer_review.md`，用于记录真实 DeepSeek provider 的小样本回答质量人工评审。
+
+Day 19 已将 README、核心 docs 和 eval 文档纳入索引；后续需要基于新索引重新进行一轮 LLM answer review。
 
 ## 6. 当前边界
 
 - `/chat` 默认使用 mock LLM client；只有显式配置 `LLM_PROVIDER=deepseek` 和 `DEEPSEEK_API_KEY` 时才调用 DeepSeek。
-- 当前索引只来自 `chunks_preview.jsonl` 和 `chunk_embeddings.npy`。
-- README 和 API 文档尚未进入向量索引。
+- 当前索引已包含 sample TXT/PDF、README、核心 docs 和 eval 文档，但仍是本地文件级别的小规模索引。
+- 多个 docs 同时包含相似风险说明时，source 命中会出现竞争，需要后续通过更细粒度 chunk、rerank 或 eval 调整继续优化。
 - eval 是小样本、规则化、人工辅助判断。
-- 当前已记录 `eval/bad_cases.md`，用于沉淀 README 未入索引、低相关 query 拒答、mock LLM 质量有限等 bad case。
+- 当前已记录 `eval/bad_cases.md`，用于沉淀低相关 query 拒答、mock LLM 质量有限和 source 支撑不足等 bad case。
 - 当前不是生产级 RAG 平台。
 
 ## 7. 合理 Roadmap

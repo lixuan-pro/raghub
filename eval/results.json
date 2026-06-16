@@ -1,442 +1,610 @@
 {
   "summary": {
     "all_cases": {
-      "total": 9,
+      "total": 11,
+      "answerable_count": 11,
       "source_hits": 7,
+      "source_evaluable": 9,
       "source_hit_rate": 0.7777777777777778,
-      "keyword_hits": 17,
-      "expected_keywords": 25,
-      "keyword_hit_rate": 0.68
+      "keyword_hits": 26,
+      "expected_keywords": 47,
+      "keyword_hit_rate": 0.5531914893617021
     },
-    "in_corpus": {
-      "total": 7,
-      "source_hits": 7,
-      "source_hit_rate": 1.0,
-      "keyword_hits": 17,
-      "expected_keywords": 22,
-      "keyword_hit_rate": 0.7727272727272727
+    "case_types": {
+      "in_corpus": {
+        "total": 9,
+        "answerable_count": 9,
+        "source_hits": 7,
+        "source_evaluable": 9,
+        "source_hit_rate": 0.7777777777777778,
+        "keyword_hits": 25,
+        "expected_keywords": 41,
+        "keyword_hit_rate": 0.6097560975609756
+      },
+      "out_of_corpus": {
+        "total": 2,
+        "answerable_count": 2,
+        "source_hits": 0,
+        "source_evaluable": 0,
+        "source_hit_rate": 0,
+        "keyword_hits": 1,
+        "expected_keywords": 6,
+        "keyword_hit_rate": 0.16666666666666666
+      }
     },
-    "boundary_case": {
-      "total": 2,
-      "source_hits": 0,
-      "source_hit_rate": 0.0,
-      "keyword_hits": 0,
-      "expected_keywords": 3,
-      "keyword_hit_rate": 0.0
-    },
-    "boundary_case_notes": [
-      "当前 README 尚未进入向量索引，用于验证系统边界"
-    ]
+    "case_type_notes": {
+      "in_corpus": [
+        "Day 18 LLM review 已纳入索引",
+        "README 中包含 /retrieve 响应字段说明",
+        "README 中包含 citation 和 no-answer 字段说明",
+        "README 中包含可选 DeepSeek provider 配置",
+        "README 和 scope 均说明当前不是生产级系统",
+        "README 已纳入向量索引，接口能力应可检索",
+        "README 当前边界明确提到不包含 OCR",
+        "README 当前边界明确说明未接入向量数据库",
+        "问题沉淀文档已纳入索引"
+      ],
+      "out_of_corpus": [
+        "当前索引中没有作者手机号信息，应作为 no-answer 风险样本观察",
+        "当前索引中没有未来线上用户量信息，应作为 no-answer 风险样本观察"
+      ]
+    }
   },
   "results": [
     {
       "id": "q001",
-      "query": "项目当前支持哪些接口？",
-      "case_type": "boundary_case",
-      "note": "当前 README 尚未进入向量索引，用于验证系统边界",
-      "answer": "这是基于检索片段生成的简化回答：ering project.\nIt currently supports FastAPI skele",
+      "query": "RAGHub 当前支持哪些接口？",
+      "case_type": "in_corpus",
+      "note": "README 已纳入向量索引，接口能力应可检索",
+      "answer": "这是基于检索片段生成的简化回答：- `score`",
+      "is_answerable": true,
+      "reason": "retrieval_evidence_found",
       "retrieved_chunks": [
         {
-          "chunk_id": "1",
-          "score": 0.48634466528892517,
-          "content": "ering project.\nIt currently supports FastAPI skele",
+          "chunk_id": "26",
+          "score": 0.6629274487495422,
+          "content": "\n- `score`\n- `content`\n- `source`\n- `file_type`\n- `page`\n\n示例输出：\n\n```text\nquery: RAGHub 当前支持哪些文档处理能力？\ntop_k: 3\n--------------------------------------------------------------------------------\nrank: 1\nchunk_id: 0\nscore: 0.6051\nsource: data/raw/sample.txt\nfile_type: txt\npage: None\ncontent:\nRAGHub is a local document question answering proj\n--------------------------------------------------------------------------------\nrank: 2\nchunk_id: 4\nscore: 0.5645\nsource: data/raw/sample.pdf\nfile_type: pdf\npag",
+          "source": "README.md",
+          "file_type": "md",
+          "page": null
+        },
+        {
+          "chunk_id": "0",
+          "score": 0.6443679332733154,
+          "content": "RAGHub is a local document question answering project.\nIt currently supports FastAPI skeleton, config, logging, and basic tests.\nThe next step is document loading.",
           "source": "data/raw/sample.txt",
           "file_type": "txt",
           "page": null
         },
         {
           "chunk_id": "2",
-          "score": 0.4694814085960388,
-          "content": "tAPI skeleton, config, logging, and basic tests.\nT",
-          "source": "data/raw/sample.txt",
-          "file_type": "txt",
-          "page": null
-        },
-        {
-          "chunk_id": "3",
-          "score": 0.46013614535331726,
-          "content": "c tests.\nThe next step is document loading.",
-          "source": "data/raw/sample.txt",
-          "file_type": "txt",
+          "score": 0.6428705453872681,
+          "content": "# RAGHub\n\nRAGHub 是一个面向本地文档的轻量级 RAG 应用后端系统，用于演示从文档导入、文本切块、embedding、向量检索、API 封装到最小 eval 的完整链路。\n\n## 当前状态\n\n当前 v0.2 已完成：\n\n- TXT / PDF 文档导入\n- 统一 `Document` 对象\n- 固定长度 + overlap 文本切块\n- 本地 embedding baseline\n- 内存版向量相似度检索\n- `POST /retrieve` 检索 API\n- `POST /chat` 最小 RAG API\n- mock LLM client\n- 可选 DeepSeek LLM provider\n- 最小 RAG eval\n- 项目问题沉淀与面试材料\n\n当前 `/chat` 默认使用 mock LLM client；如本地配置 `LLM_PROVIDER=deepseek` 和 `DEEPSEEK_API_KEY`，可选调用 DeepSeek。当前 eval 是小样本规则化评测，不是工业级自动评测系统。\n\n## 核心链路\n\n```text\nTXT/PDF\n-> Docu",
+          "source": "README.md",
+          "file_type": "md",
           "page": null
         }
       ],
-      "top_score": 0.48634466528892517,
-      "matched_keywords": [],
+      "top_score": 0.6629274487495422,
+      "matched_keywords": [
+        "/retrieve",
+        "/chat"
+      ],
       "expected_keywords": [
         "/health",
-        "/version"
+        "/version",
+        "/retrieve",
+        "/chat"
       ],
-      "keyword_hit_count": 0,
+      "keyword_hit_count": 2,
       "expected_source": "README.md",
-      "source_hit": false
+      "source_hit": true,
+      "source_evaluable": true
     },
     {
       "id": "q002",
-      "query": "项目当前版本是多少？",
-      "case_type": "boundary_case",
-      "note": "当前 README 尚未进入向量索引，用于验证系统边界",
-      "answer": "这是基于检索片段生成的简化回答：c tests.\nThe next step is document loading.",
+      "query": "RAGHub 的 /retrieve 接口返回哪些字段？",
+      "case_type": "in_corpus",
+      "note": "README 中包含 /retrieve 响应字段说明",
+      "answer": "这是基于检索片段生成的简化回答：暂不处理：",
+      "is_answerable": true,
+      "reason": "retrieval_evidence_found",
       "retrieved_chunks": [
         {
-          "chunk_id": "3",
-          "score": 0.43036550283432007,
-          "content": "c tests.\nThe next step is document loading.",
+          "chunk_id": "28",
+          "score": 0.6386908888816833,
+          "content": "暂不处理：\n\n- FAISS\n- Qdrant / Milvus / pgvector\n- BM25\n- 混合检索\n- rerank\n\n---\n\n## Retrieve API\n\n当前已新增 `POST /retrieve` 接口，用于把用户 query 交给内存版向量检索模块，并返回相似度最高的 top-k chunks。\n\n请求示例：\n\n```json\n{\n  \"query\": \"RAGHub 当前支持哪些文档处理能力？\",\n  \"top_k\": 3\n}\n```\n\n响应示例：\n\n```json\n{\n  \"query\": \"RAGHub 当前支持哪些文档处理能力？\",\n  \"top_k\": 3,\n  \"results\": [\n    {\n      \"chunk_id\": \"0\",\n      \"score\": 0.83,\n      \"content\": \"...\",\n      \"source\": \"data/raw/sample.txt\",\n      \"file_type\": \"txt\",\n      \"page\": null\n    }\n  ]\n}\n```\n\n当前边界：\n\n",
+          "source": "README.md",
+          "file_type": "md",
+          "page": null
+        },
+        {
+          "chunk_id": "0",
+          "score": 0.6076948642730713,
+          "content": "RAGHub is a local document question answering project.\nIt currently supports FastAPI skeleton, config, logging, and basic tests.\nThe next step is document loading.",
           "source": "data/raw/sample.txt",
           "file_type": "txt",
+          "page": null
+        },
+        {
+          "chunk_id": "4",
+          "score": 0.6067844033241272,
+          "content": "Activate.ps1\npython -m pytest\npython scripts\\run_eval.py\n```\n\n启动 FastAPI：\n\n```powershell\nuvicorn app.main:app --reload\n```\n\n## API 示例\n\n`POST /retrieve`\n\n```json\n{\n  \"query\": \"RAGHub 当前支持哪些文档处理能力？\",\n  \"top_k\": 3\n}\n```\n\n`POST /chat`\n\n```json\n{\n  \"query\": \"RAGHub 当前支持哪些文档处理能力？\",\n  \"top_k\": 3\n}\n```\n\n`/chat` 返回 `answer` 和 `retrieved_chunks`，其中 `retrieved_chunks` 保留 `source`、`page`、`score`，便于解释回答来源。\nDay 16 起，`/chat` 还会返回 `sources`、`is_answerable` 和 `reason`，用于展示引用证据和无答案拒答原因。\n\n## Eval 摘要\n\n当前最小 eval 结果：",
+          "source": "README.md",
+          "file_type": "md",
+          "page": null
+        }
+      ],
+      "top_score": 0.6386908888816833,
+      "matched_keywords": [
+        "chunk_id",
+        "score",
+        "content",
+        "source",
+        "file_type",
+        "page"
+      ],
+      "expected_keywords": [
+        "chunk_id",
+        "score",
+        "content",
+        "source",
+        "file_type",
+        "page"
+      ],
+      "keyword_hit_count": 6,
+      "expected_source": "README.md",
+      "source_hit": true,
+      "source_evaluable": true
+    },
+    {
+      "id": "q003",
+      "query": "RAGHub 的 /chat 接口会返回哪些引用和拒答字段？",
+      "case_type": "in_corpus",
+      "note": "README 中包含 citation 和 no-answer 字段说明",
+      "answer": "这是基于检索片段生成的简化回答：# RAGHub Bad Case 复盘",
+      "is_answerable": true,
+      "reason": "retrieval_evidence_found",
+      "retrieved_chunks": [
+        {
+          "chunk_id": "59",
+          "score": 0.6099297404289246,
+          "content": "# RAGHub Bad Case 复盘\n\n本文档记录 RAGHub v0.2 阶段已经暴露的 bad case。它们不是生产事故，而是当前最小 RAG 链路的真实边界，用于后续迭代和面试复盘。\n\n## CASE-001：README/API 问题未命中\n\n- query: 项目当前支持哪些接口？\n- expected: 能回答 `/health`、`/version`、`/retrieve`、`/chat` 等接口信息。\n- retrieved_chunks: 当前主要来自 `data/raw/sample.txt` 和 `data/raw/sample.pdf`。\n- answer: mock LLM 只能基于 sample 文档片段生成简化回答，无法稳定回答 README/API 文档中的接口清单。\n- problem_type: boundary_case\n- root_cause: 当前向量索引只包含 `chunks_preview.jsonl` 中的 sample 文档内容，README 和 API 文档尚未进入向量索引。\n- current_solution: 在 `ev",
+          "source": "eval/bad_cases.md",
+          "file_type": "md",
+          "page": null
+        },
+        {
+          "chunk_id": "26",
+          "score": 0.5898922681808472,
+          "content": "\n- `score`\n- `content`\n- `source`\n- `file_type`\n- `page`\n\n示例输出：\n\n```text\nquery: RAGHub 当前支持哪些文档处理能力？\ntop_k: 3\n--------------------------------------------------------------------------------\nrank: 1\nchunk_id: 0\nscore: 0.6051\nsource: data/raw/sample.txt\nfile_type: txt\npage: None\ncontent:\nRAGHub is a local document question answering proj\n--------------------------------------------------------------------------------\nrank: 2\nchunk_id: 4\nscore: 0.5645\nsource: data/raw/sample.pdf\nfile_type: pdf\npag",
+          "source": "README.md",
+          "file_type": "md",
+          "page": null
+        },
+        {
+          "chunk_id": "30",
+          "score": 0.5878299474716187,
+          "content": "召回 chunks 构造 RAG prompt，并通过配置化 LLM client 返回最小问答结果。默认 provider 是 mock，也可以通过环境变量切换到 DeepSeek。\n\n请求示例：\n\n```json\n{\n  \"query\": \"RAGHub 当前支持哪些文档处理能力？\",\n  \"top_k\": 3\n}\n```\n\n响应示例：\n\n```json\n{\n  \"query\": \"RAGHub 当前支持哪些文档处理能力？\",\n  \"answer\": \"这是基于检索片段生成的简化回答：...\",\n  \"is_answerable\": true,\n  \"reason\": \"retrieval_evidence_found\",\n  \"sources\": [\n    {\n      \"chunk_id\": \"0\",\n      \"source\": \"data/raw/sample.txt\",\n      \"file_type\": \"txt\",\n      \"page\": null,\n      \"score\": 0.83,\n      \"content_preview\": \"...\"\n ",
+          "source": "README.md",
+          "file_type": "md",
+          "page": null
+        }
+      ],
+      "top_score": 0.6099297404289246,
+      "matched_keywords": [
+        "sources",
+        "is_answerable",
+        "reason",
+        "retrieved_chunks"
+      ],
+      "expected_keywords": [
+        "sources",
+        "is_answerable",
+        "reason",
+        "retrieved_chunks"
+      ],
+      "keyword_hit_count": 4,
+      "expected_source": "README.md",
+      "source_hit": true,
+      "source_evaluable": true
+    },
+    {
+      "id": "q004",
+      "query": "RAGHub 如何配置 DeepSeek provider？",
+      "case_type": "in_corpus",
+      "note": "README 中包含可选 DeepSeek provider 配置",
+      "answer": "这是基于检索片段生成的简化回答：# RAGHub",
+      "is_answerable": true,
+      "reason": "retrieval_evidence_found",
+      "retrieved_chunks": [
+        {
+          "chunk_id": "2",
+          "score": 0.6205126643180847,
+          "content": "# RAGHub\n\nRAGHub 是一个面向本地文档的轻量级 RAG 应用后端系统，用于演示从文档导入、文本切块、embedding、向量检索、API 封装到最小 eval 的完整链路。\n\n## 当前状态\n\n当前 v0.2 已完成：\n\n- TXT / PDF 文档导入\n- 统一 `Document` 对象\n- 固定长度 + overlap 文本切块\n- 本地 embedding baseline\n- 内存版向量相似度检索\n- `POST /retrieve` 检索 API\n- `POST /chat` 最小 RAG API\n- mock LLM client\n- 可选 DeepSeek LLM provider\n- 最小 RAG eval\n- 项目问题沉淀与面试材料\n\n当前 `/chat` 默认使用 mock LLM client；如本地配置 `LLM_PROVIDER=deepseek` 和 `DEEPSEEK_API_KEY`，可选调用 DeepSeek。当前 eval 是小样本规则化评测，不是工业级自动评测系统。\n\n## 核心链路\n\n```text\nTXT/PDF\n-> Docu",
+          "source": "README.md",
+          "file_type": "md",
+          "page": null
+        },
+        {
+          "chunk_id": "33",
+          "score": 0.6181864738464355,
+          "content": "\nDEEPSEEK_BASE_URL=https://api.deepseek.com\nDEEPSEEK_MODEL=deepseek-v4-flash\n```\n\n也可以运行：\n\n```powershell\npython scripts\\chat_deepseek_demo.py\n```\n\n注意：\n- 不要把真实 `DEEPSEEK_API_KEY` 提交到 Git。\n- 缺少 `DEEPSEEK_API_KEY` 时，demo 会提示并跳过真实调用。\n- 当 `/chat` 判断为 no-answer 时，不会调用真实 LLM，只返回本地拒答文案。\n- 当前 DeepSeek 接入只是可选 provider，不代表 RAGHub 已经是生产级 RAG 系统。\n\n## Citation and No-answer Strategy\n\n`POST /chat` 当前会返回引用证据和可回答性判断：\n\n- `sources`：面向用户展示的引用证据摘要。\n- `is_answerable`：当前检索结果是否足以支撑回答。\n- `reason`：可回答或拒答的原因。\n- `retrieved_",
+          "source": "README.md",
+          "file_type": "md",
+          "page": null
+        },
+        {
+          "chunk_id": "64",
+          "score": 0.6170936822891235,
+          "content": "# RAGHub LLM 回答质量人工评审\n\n## 1. 评审目标\n\n本评审用于记录 RAGHub 接入真实 DeepSeek provider 后的少量人工观察结果。重点检查 `/chat` 返回的回答是否基于 retrieved sources、是否能在资料不足时保持克制、sources 是否能支撑答案，以及是否出现明显幻觉。\n\n本次评审是小样本人工评审，不代表大规模准确率，也不能证明系统生产级可用。\n\n## 2. 评审范围\n\n- Provider：DeepSeek\n- 接口链路：`query -> retrieve_chunks -> build_rag_prompt -> DeepSeekLLMClient -> /chat response`\n- 样本数量：7 条\n- 样本类型：`in_corpus`、`boundary_case`、`risk_case`\n- 检索数据：`data/processed/chunks_preview.jsonl` 和 `data/processed/chunk_embeddings.npy`\n\n当前索引语料很小，只包含 sample TXT/P",
+          "source": "eval/llm_answer_review.md",
+          "file_type": "md",
+          "page": null
+        }
+      ],
+      "top_score": 0.6205126643180847,
+      "matched_keywords": [
+        "LLM_PROVIDER",
+        "deepseek",
+        "DEEPSEEK_API_KEY",
+        "deepseek-v4-flash"
+      ],
+      "expected_keywords": [
+        "LLM_PROVIDER",
+        "deepseek",
+        "DEEPSEEK_API_KEY",
+        "deepseek-v4-flash"
+      ],
+      "keyword_hit_count": 4,
+      "expected_source": "README.md",
+      "source_hit": true,
+      "source_evaluable": true
+    },
+    {
+      "id": "q005",
+      "query": "RAGHub 当前是不是生产级 RAG 平台？",
+      "case_type": "in_corpus",
+      "note": "README 和 scope 均说明当前不是生产级系统",
+      "answer": "这是基于检索片段生成的简化回答：| CASE-007 | RAGHub 的 DeepSeek 接入是否代表已经是生产级 RAG 系统？ | risk_case | true | retrieval_evidence_found | 8 | LLM 保持克制，未夸大生产级能力；但 sources 对该问题支撑不足。 |",
+      "is_answerable": true,
+      "reason": "retrieval_evidence_found",
+      "retrieved_chunks": [
+        {
+          "chunk_id": "68",
+          "score": 0.685272753238678,
+          "content": "| CASE-007 | RAGHub 的 DeepSeek 接入是否代表已经是生产级 RAG 系统？ | risk_case | true | retrieval_evidence_found | 8 | LLM 保持克制，未夸大生产级能力；但 sources 对该问题支撑不足。 |\n\n平均分：8.1/10。该平均分只用于本轮 7 条样本的人工观察，不代表系统准确率。\n\n## 5. 样本详情\n\n### CASE-001：项目类型问题\n\n- Query：RAGHub 是什么类型的项目？\n- Case Type：in_corpus\n- is_answerable：true\n- reason：retrieval_evidence_found\n- Answer 摘要：RAGHub 是一个本地文档问答项目。\n- Sources 摘要：\n  - `data/raw/sample.txt`：`RAGHub is a local document question answering proj`\n  - `data/raw/sample.pdf`：PDF loader sample 片段\n- 人工评",
+          "source": "eval/llm_answer_review.md",
+          "file_type": "md",
           "page": null
         },
         {
           "chunk_id": "2",
-          "score": 0.4211826026439667,
-          "content": "tAPI skeleton, config, logging, and basic tests.\nT",
-          "source": "data/raw/sample.txt",
-          "file_type": "txt",
+          "score": 0.6395534873008728,
+          "content": "# RAGHub\n\nRAGHub 是一个面向本地文档的轻量级 RAG 应用后端系统，用于演示从文档导入、文本切块、embedding、向量检索、API 封装到最小 eval 的完整链路。\n\n## 当前状态\n\n当前 v0.2 已完成：\n\n- TXT / PDF 文档导入\n- 统一 `Document` 对象\n- 固定长度 + overlap 文本切块\n- 本地 embedding baseline\n- 内存版向量相似度检索\n- `POST /retrieve` 检索 API\n- `POST /chat` 最小 RAG API\n- mock LLM client\n- 可选 DeepSeek LLM provider\n- 最小 RAG eval\n- 项目问题沉淀与面试材料\n\n当前 `/chat` 默认使用 mock LLM client；如本地配置 `LLM_PROVIDER=deepseek` 和 `DEEPSEEK_API_KEY`，可选调用 DeepSeek。当前 eval 是小样本规则化评测，不是工业级自动评测系统。\n\n## 核心链路\n\n```text\nTXT/PDF\n-> Docu",
+          "source": "README.md",
+          "file_type": "md",
           "page": null
         },
         {
-          "chunk_id": "1",
-          "score": 0.41481322050094604,
-          "content": "ering project.\nIt currently supports FastAPI skele",
-          "source": "data/raw/sample.txt",
-          "file_type": "txt",
+          "chunk_id": "43",
+          "score": 0.607759416103363,
+          "content": "# RAGHub v0.2 范围说明\n\n## 1. 项目定位\n\nRAGHub v0.2 是一个面向本地文档的轻量级 RAG 应用后端系统。它的目标不是直接做成生产级平台，而是清晰展示 RAG 主链路：文档导入、文本切块、embedding、向量检索、API 封装、最小问答和 eval。\n\n## 2. 当前已完成能力\n\n- TXT 文档读取\n- PDF 文档读取\n- 统一 `Document` 对象\n- 固定长度 + overlap 文本切块\n- chunk 预览文件 `chunks_preview.jsonl`\n- 本地 embedding baseline\n- chunk 向量矩阵 `chunk_embeddings.npy`\n- README、核心 docs 和 eval 文档索引语料\n- 内存版 cosine similarity top-k 检索\n- `POST /retrieve`\n- `POST /chat`\n- mock LLM client\n- 可选 DeepSeek LLM provider\n- 最小 RAG eval\n- 问题沉淀文档\n- 面试材料和项目讲解材料\n\n",
+          "source": "docs/raghub_v0_2_scope.md",
+          "file_type": "md",
           "page": null
         }
       ],
-      "top_score": 0.43036550283432007,
+      "top_score": 0.685272753238678,
       "matched_keywords": [],
       "expected_keywords": [
-        "0.1.0"
+        "不是生产级",
+        "学习型",
+        "求职展示",
+        "边界"
       ],
       "keyword_hit_count": 0,
       "expected_source": "README.md",
-      "source_hit": false
-    },
-    {
-      "id": "q003",
-      "query": "RAGHub 当前下一步是什么？",
-      "case_type": "in_corpus",
-      "note": "当前索引语料内的问题",
-      "answer": "这是基于检索片段生成的简化回答：RAGHub is a local document question answering proj",
-      "retrieved_chunks": [
-        {
-          "chunk_id": "0",
-          "score": 0.6070005297660828,
-          "content": "RAGHub is a local document question answering proj",
-          "source": "data/raw/sample.txt",
-          "file_type": "txt",
-          "page": null
-        },
-        {
-          "chunk_id": "4",
-          "score": 0.48949873447418213,
-          "content": "RAGHub PDF loader sample. \n \nThis PDF file is used",
-          "source": "data/raw/sample.pdf",
-          "file_type": "pdf",
-          "page": 1
-        },
-        {
-          "chunk_id": "5",
-          "score": 0.37390023469924927,
-          "content": "le is used to test document loading. \n \nThe next s",
-          "source": "data/raw/sample.pdf",
-          "file_type": "pdf",
-          "page": 1
-        }
-      ],
-      "top_score": 0.6070005297660828,
-      "matched_keywords": [
-        "document loading"
-      ],
-      "expected_keywords": [
-        "next step",
-        "document loading"
-      ],
-      "keyword_hit_count": 1,
-      "expected_source": "data/raw/sample.txt",
-      "source_hit": true
-    },
-    {
-      "id": "q004",
-      "query": "PDF loader 当前支持什么处理方式？",
-      "case_type": "in_corpus",
-      "note": "当前索引语料内的问题",
-      "answer": "这是基于检索片段生成的简化回答：RAGHub PDF loader sample. \n \nThis PDF file is used",
-      "retrieved_chunks": [
-        {
-          "chunk_id": "4",
-          "score": 0.6776376366615295,
-          "content": "RAGHub PDF loader sample. \n \nThis PDF file is used",
-          "source": "data/raw/sample.pdf",
-          "file_type": "pdf",
-          "page": 1
-        },
-        {
-          "chunk_id": "6",
-          "score": 0.5012929439544678,
-          "content": "The next step is page-based PDF text extraction. ",
-          "source": "data/raw/sample.pdf",
-          "file_type": "pdf",
-          "page": 1
-        },
-        {
-          "chunk_id": "5",
-          "score": 0.4540741741657257,
-          "content": "le is used to test document loading. \n \nThe next s",
-          "source": "data/raw/sample.pdf",
-          "file_type": "pdf",
-          "page": 1
-        }
-      ],
-      "top_score": 0.6776376366615295,
-      "matched_keywords": [
-        "page-based",
-        "PDF",
-        "text extraction"
-      ],
-      "expected_keywords": [
-        "page-based",
-        "PDF",
-        "text extraction"
-      ],
-      "keyword_hit_count": 3,
-      "expected_source": "data/raw/sample.pdf",
-      "source_hit": true
-    },
-    {
-      "id": "q005",
-      "query": "RAGHub 是什么类型的项目？",
-      "case_type": "in_corpus",
-      "note": "当前索引语料内的问题",
-      "answer": "这是基于检索片段生成的简化回答：RAGHub is a local document question answering proj",
-      "retrieved_chunks": [
-        {
-          "chunk_id": "0",
-          "score": 0.5783564448356628,
-          "content": "RAGHub is a local document question answering proj",
-          "source": "data/raw/sample.txt",
-          "file_type": "txt",
-          "page": null
-        },
-        {
-          "chunk_id": "4",
-          "score": 0.43238365650177,
-          "content": "RAGHub PDF loader sample. \n \nThis PDF file is used",
-          "source": "data/raw/sample.pdf",
-          "file_type": "pdf",
-          "page": 1
-        },
-        {
-          "chunk_id": "1",
-          "score": 0.4117761254310608,
-          "content": "ering project.\nIt currently supports FastAPI skele",
-          "source": "data/raw/sample.txt",
-          "file_type": "txt",
-          "page": null
-        }
-      ],
-      "top_score": 0.5783564448356628,
-      "matched_keywords": [
-        "RAGHub",
-        "local",
-        "document",
-        "question answering"
-      ],
-      "expected_keywords": [
-        "RAGHub",
-        "local",
-        "document",
-        "question answering"
-      ],
-      "keyword_hit_count": 4,
-      "expected_source": "data/raw/sample.txt",
-      "source_hit": true
+      "source_hit": true,
+      "source_evaluable": true
     },
     {
       "id": "q006",
-      "query": "RAGHub 当前支持哪些基础工程能力？",
+      "query": "RAGHub 当前是否支持 OCR 处理扫描版 PDF？",
       "case_type": "in_corpus",
-      "note": "当前索引语料内的问题",
-      "answer": "这是基于检索片段生成的简化回答：RAGHub is a local document question answering proj",
+      "note": "README 当前边界明确提到不包含 OCR",
+      "answer": "这是基于检索片段生成的简化回答：|",
+      "is_answerable": true,
+      "reason": "retrieval_evidence_found",
       "retrieved_chunks": [
         {
-          "chunk_id": "0",
-          "score": 0.5516541004180908,
-          "content": "RAGHub is a local document question answering proj",
-          "source": "data/raw/sample.txt",
-          "file_type": "txt",
+          "chunk_id": "67",
+          "score": 0.71783846616745,
+          "content": "|\n| CASE-004 | PDF loader 下一步计划支持什么提取方式？ | in_corpus | true | retrieval_evidence_found | 8 | 能提到 page-based PDF text extraction，但回答表达偏泛。 |\n| CASE-005 | RAGHub 是否已经支持 OCR 处理扫描版 PDF？ | boundary_case | true | retrieval_evidence_found | 8 | LLM 未编造 OCR 支持，明确说明资料未涉及 OCR。 |\n| CASE-006 | RAGHub 是否已经接入 Qdrant 或 Milvus？ | boundary_case | true | retrieval_evidence_found | 8 | LLM 未编造向量数据库能力，但系统层 `is_answerable=true` 暴露阈值偏宽。 |\n| CASE-007 | RAGHub 的 DeepSeek 接入是否代表已经是生产级 RAG 系统？ | risk_case | true | retriev",
+          "source": "eval/llm_answer_review.md",
+          "file_type": "md",
           "page": null
         },
         {
-          "chunk_id": "4",
-          "score": 0.4249475300312042,
-          "content": "RAGHub PDF loader sample. \n \nThis PDF file is used",
-          "source": "data/raw/sample.pdf",
-          "file_type": "pdf",
-          "page": 1
+          "chunk_id": "26",
+          "score": 0.6456868052482605,
+          "content": "\n- `score`\n- `content`\n- `source`\n- `file_type`\n- `page`\n\n示例输出：\n\n```text\nquery: RAGHub 当前支持哪些文档处理能力？\ntop_k: 3\n--------------------------------------------------------------------------------\nrank: 1\nchunk_id: 0\nscore: 0.6051\nsource: data/raw/sample.txt\nfile_type: txt\npage: None\ncontent:\nRAGHub is a local document question answering proj\n--------------------------------------------------------------------------------\nrank: 2\nchunk_id: 4\nscore: 0.5645\nsource: data/raw/sample.pdf\nfile_type: pdf\npag",
+          "source": "README.md",
+          "file_type": "md",
+          "page": null
         },
         {
-          "chunk_id": "1",
-          "score": 0.4192044734954834,
-          "content": "ering project.\nIt currently supports FastAPI skele",
-          "source": "data/raw/sample.txt",
-          "file_type": "txt",
+          "chunk_id": "73",
+          "score": 0.5856235027313232,
+          "content": "OCR 处理扫描版 PDF？\n- Case Type：boundary_case\n- is_answerable：true\n- reason：retrieval_evidence_found\n- Answer 摘要：DeepSeek 表示无法确定是否支持 OCR，资料只涉及 PDF 加载和基于页面的文本提取，未涉及 OCR。\n- Sources 摘要：\n  - `data/raw/sample.pdf`：PDF loader sample\n  - `data/raw/sample.pdf`：page-based PDF text extraction\n- 人工评分：\n  - 可回答性判断：1\n  - 证据一致性：2\n  - 引用支撑：1\n  - 回答完整度：2\n  - 幻觉控制：2\n  - 总分：8\n- 评审结论：LLM 没有编造 OCR 能力；但系统层 `is_answerable=true` 说明当前 no-answer 阈值仍偏宽。\n- 是否进入 bad case：是，作为“检索分数较高但实际是边界能力问题”的样本。\n\n### CASE-006：向量数据库边界问题\n\n- Quer",
+          "source": "eval/llm_answer_review.md",
+          "file_type": "md",
           "page": null
         }
       ],
-      "top_score": 0.5516541004180908,
+      "top_score": 0.71783846616745,
       "matched_keywords": [
-        "FastAPI"
+        "OCR",
+        "扫描版"
       ],
       "expected_keywords": [
-        "FastAPI",
-        "config",
-        "logging",
-        "tests"
+        "OCR",
+        "扫描版",
+        "暂不",
+        "不支持"
       ],
-      "keyword_hit_count": 1,
-      "expected_source": "data/raw/sample.txt",
-      "source_hit": true
+      "keyword_hit_count": 2,
+      "expected_source": "README.md",
+      "source_hit": true,
+      "source_evaluable": true
     },
     {
       "id": "q007",
-      "query": "RAGHub 样本文档里提到下一步是什么？",
+      "query": "RAGHub 当前是否已经接入 Qdrant 或 Milvus？",
       "case_type": "in_corpus",
-      "note": "当前索引语料内的问题",
-      "answer": "这是基于检索片段生成的简化回答：RAGHub is a local document question answering proj",
+      "note": "README 当前边界明确说明未接入向量数据库",
+      "answer": "这是基于检索片段生成的简化回答：值仍偏宽。",
+      "is_answerable": true,
+      "reason": "retrieval_evidence_found",
+      "retrieved_chunks": [
+        {
+          "chunk_id": "74",
+          "score": 0.6558451652526855,
+          "content": "值仍偏宽。\n- 是否进入 bad case：是，作为“检索分数较高但实际是边界能力问题”的样本。\n\n### CASE-006：向量数据库边界问题\n\n- Query：RAGHub 是否已经接入 Qdrant 或 Milvus？\n- Case Type：boundary_case\n- is_answerable：true\n- reason：retrieval_evidence_found\n- Answer 摘要：DeepSeek 表示资料未涉及 Qdrant 或 Milvus，资料不足，无法基于当前文档回答。\n- Sources 摘要：\n  - `data/raw/sample.txt`：RAGHub local document QA project\n  - `data/raw/sample.pdf`：PDF loader sample\n- 人工评分：\n  - 可回答性判断：1\n  - 证据一致性：2\n  - 引用支撑：1\n  - 回答完整度：2\n  - 幻觉控制：2\n  - 总分：8\n- 评审结论：LLM 拒绝编造 Qdrant/Milvus 能力；但 retrieved source",
+          "source": "eval/llm_answer_review.md",
+          "file_type": "md",
+          "page": null
+        },
+        {
+          "chunk_id": "75",
+          "score": 0.5908805727958679,
+          "content": " 回答完整度：2\n  - 幻觉控制：2\n  - 总分：8\n- 评审结论：LLM 拒绝编造 Qdrant/Milvus 能力；但 retrieved sources 对该问题支撑不足，系统层仍返回 answerable。\n- 是否进入 bad case：是\n\n### CASE-007：生产级能力风险问题\n\n- Query：RAGHub 的 DeepSeek 接入是否代表已经是生产级 RAG 系统？\n- Case Type：risk_case\n- is_answerable：true\n- reason：retrieval_evidence_found\n- Answer 摘要：DeepSeek 表示资料未提及 DeepSeek 与 RAG 的具体关系，资料不足，无法基于当前文档回答。\n- Sources 摘要：\n  - `data/raw/sample.txt`：RAGHub local document QA project\n  - `data/raw/sample.pdf`：PDF loader sample\n- 人工评分：\n  - 可回答性判断：1\n  - 证据一致性：2\n  - 引用",
+          "source": "eval/llm_answer_review.md",
+          "file_type": "md",
+          "page": null
+        },
+        {
+          "chunk_id": "68",
+          "score": 0.5791350603103638,
+          "content": "| CASE-007 | RAGHub 的 DeepSeek 接入是否代表已经是生产级 RAG 系统？ | risk_case | true | retrieval_evidence_found | 8 | LLM 保持克制，未夸大生产级能力；但 sources 对该问题支撑不足。 |\n\n平均分：8.1/10。该平均分只用于本轮 7 条样本的人工观察，不代表系统准确率。\n\n## 5. 样本详情\n\n### CASE-001：项目类型问题\n\n- Query：RAGHub 是什么类型的项目？\n- Case Type：in_corpus\n- is_answerable：true\n- reason：retrieval_evidence_found\n- Answer 摘要：RAGHub 是一个本地文档问答项目。\n- Sources 摘要：\n  - `data/raw/sample.txt`：`RAGHub is a local document question answering proj`\n  - `data/raw/sample.pdf`：PDF loader sample 片段\n- 人工评",
+          "source": "eval/llm_answer_review.md",
+          "file_type": "md",
+          "page": null
+        }
+      ],
+      "top_score": 0.6558451652526855,
+      "matched_keywords": [
+        "Qdrant",
+        "Milvus"
+      ],
+      "expected_keywords": [
+        "Qdrant",
+        "Milvus",
+        "pgvector",
+        "当前边界",
+        "不包含"
+      ],
+      "keyword_hit_count": 2,
+      "expected_source": "README.md",
+      "source_hit": false,
+      "source_evaluable": true
+    },
+    {
+      "id": "q008",
+      "query": "RAGHub 的 LLM 回答质量人工评审发现了什么风险？",
+      "case_type": "in_corpus",
+      "note": "Day 18 LLM review 已纳入索引",
+      "answer": "这是基于检索片段生成的简化回答：# RAGHub LLM 回答质量人工评审",
+      "is_answerable": true,
+      "reason": "retrieval_evidence_found",
+      "retrieved_chunks": [
+        {
+          "chunk_id": "64",
+          "score": 0.655193030834198,
+          "content": "# RAGHub LLM 回答质量人工评审\n\n## 1. 评审目标\n\n本评审用于记录 RAGHub 接入真实 DeepSeek provider 后的少量人工观察结果。重点检查 `/chat` 返回的回答是否基于 retrieved sources、是否能在资料不足时保持克制、sources 是否能支撑答案，以及是否出现明显幻觉。\n\n本次评审是小样本人工评审，不代表大规模准确率，也不能证明系统生产级可用。\n\n## 2. 评审范围\n\n- Provider：DeepSeek\n- 接口链路：`query -> retrieve_chunks -> build_rag_prompt -> DeepSeekLLMClient -> /chat response`\n- 样本数量：7 条\n- 样本类型：`in_corpus`、`boundary_case`、`risk_case`\n- 检索数据：`data/processed/chunks_preview.jsonl` 和 `data/processed/chunk_embeddings.npy`\n\n当前索引语料很小，只包含 sample TXT/P",
+          "source": "eval/llm_answer_review.md",
+          "file_type": "md",
+          "page": null
+        },
+        {
+          "chunk_id": "62",
+          "score": 0.6110897064208984,
+          "content": "体现了 no-answer 策略的重要性。RAG 系统不能因为检索到了任意片段就强行回答，需要根据证据强度判断是否拒答。\n\n## CASE-003：mock LLM 回答质量有限\n\n- query: RAGHub 当前支持哪些文档处理能力？\n- expected: 能综合说明 TXT/PDF loader、Document 对象、chunk、embedding 和检索。\n- retrieved_chunks: 能命中 sample 文档中的部分内容。\n- answer: mock LLM 当前只基于第一个有效 chunk 生成简化回答，不能真正综合多个片段。\n- problem_type: mock_generation_limit\n- root_cause: 当前 mock LLM 的目标是打通 RAG 闭环和测试 response 结构，不具备真实大模型的归纳、压缩和多片段综合能力。\n- current_solution: README 和 scope 文档明确说明 `/chat` 使用 mock LLM，不代表真实生成质量。\n- next_fix: 接入 DeepSeek / O",
+          "source": "eval/bad_cases.md",
+          "file_type": "md",
+          "page": null
+        },
+        {
+          "chunk_id": "75",
+          "score": 0.5782715082168579,
+          "content": " 回答完整度：2\n  - 幻觉控制：2\n  - 总分：8\n- 评审结论：LLM 拒绝编造 Qdrant/Milvus 能力；但 retrieved sources 对该问题支撑不足，系统层仍返回 answerable。\n- 是否进入 bad case：是\n\n### CASE-007：生产级能力风险问题\n\n- Query：RAGHub 的 DeepSeek 接入是否代表已经是生产级 RAG 系统？\n- Case Type：risk_case\n- is_answerable：true\n- reason：retrieval_evidence_found\n- Answer 摘要：DeepSeek 表示资料未提及 DeepSeek 与 RAG 的具体关系，资料不足，无法基于当前文档回答。\n- Sources 摘要：\n  - `data/raw/sample.txt`：RAGHub local document QA project\n  - `data/raw/sample.pdf`：PDF loader sample\n- 人工评分：\n  - 可回答性判断：1\n  - 证据一致性：2\n  - 引用",
+          "source": "eval/llm_answer_review.md",
+          "file_type": "md",
+          "page": null
+        }
+      ],
+      "top_score": 0.655193030834198,
+      "matched_keywords": [
+        "索引语料",
+        "README",
+        "sources",
+        "no-answer"
+      ],
+      "expected_keywords": [
+        "索引语料",
+        "README",
+        "docs",
+        "sources",
+        "no-answer"
+      ],
+      "keyword_hit_count": 4,
+      "expected_source": "eval/llm_answer_review.md",
+      "source_hit": true,
+      "source_evaluable": true
+    },
+    {
+      "id": "q009",
+      "query": "RAGHub 项目中遇到过哪些工程问题？",
+      "case_type": "in_corpus",
+      "note": "问题沉淀文档已纳入索引",
+      "answer": "这是基于检索片段生成的简化回答：RAGHub is a local document question answering project.",
+      "is_answerable": true,
+      "reason": "retrieval_evidence_found",
       "retrieved_chunks": [
         {
           "chunk_id": "0",
-          "score": 0.5964125990867615,
-          "content": "RAGHub is a local document question answering proj",
+          "score": 0.6233018040657043,
+          "content": "RAGHub is a local document question answering project.\nIt currently supports FastAPI skeleton, config, logging, and basic tests.\nThe next step is document loading.",
           "source": "data/raw/sample.txt",
           "file_type": "txt",
           "page": null
         },
         {
-          "chunk_id": "4",
-          "score": 0.56020587682724,
-          "content": "RAGHub PDF loader sample. \n \nThis PDF file is used",
-          "source": "data/raw/sample.pdf",
-          "file_type": "pdf",
-          "page": 1
+          "chunk_id": "66",
+          "score": 0.6016785502433777,
+          "content": "e | Reason | Score | 主要结论 |\n|---|---|---|---|---|---:|---|\n| CASE-001 | RAGHub 是什么类型的项目？ | in_corpus | true | retrieval_evidence_found | 10 | 回答简洁，完全由 sample.txt 支撑。 |\n| CASE-002 | RAGHub 当前支持哪些基础工程能力？ | in_corpus | true | retrieval_evidence_found | 7 | 回答偏保守，只答出项目类型，未充分利用 config/logging/tests 片段。 |\n| CASE-003 | PDF loader 当前支持什么处理方式？ | in_corpus | true | retrieval_evidence_found | 8 | 能识别资料有限并拒绝展开，sources 与 PDF 相关。 |\n| CASE-004 | PDF loader 下一步计划支持什么提取方式？ | in_corpus | true | retrieval_evidence",
+          "source": "eval/llm_answer_review.md",
+          "file_type": "md",
+          "page": null
         },
         {
-          "chunk_id": "6",
-          "score": 0.49137628078460693,
-          "content": "The next step is page-based PDF text extraction. ",
-          "source": "data/raw/sample.pdf",
-          "file_type": "pdf",
-          "page": 1
+          "chunk_id": "59",
+          "score": 0.5796669721603394,
+          "content": "# RAGHub Bad Case 复盘\n\n本文档记录 RAGHub v0.2 阶段已经暴露的 bad case。它们不是生产事故，而是当前最小 RAG 链路的真实边界，用于后续迭代和面试复盘。\n\n## CASE-001：README/API 问题未命中\n\n- query: 项目当前支持哪些接口？\n- expected: 能回答 `/health`、`/version`、`/retrieve`、`/chat` 等接口信息。\n- retrieved_chunks: 当前主要来自 `data/raw/sample.txt` 和 `data/raw/sample.pdf`。\n- answer: mock LLM 只能基于 sample 文档片段生成简化回答，无法稳定回答 README/API 文档中的接口清单。\n- problem_type: boundary_case\n- root_cause: 当前向量索引只包含 `chunks_preview.jsonl` 中的 sample 文档内容，README 和 API 文档尚未进入向量索引。\n- current_solution: 在 `ev",
+          "source": "eval/bad_cases.md",
+          "file_type": "md",
+          "page": null
         }
       ],
-      "top_score": 0.5964125990867615,
+      "top_score": 0.6233018040657043,
       "matched_keywords": [
-        "next step"
+        "mock LLM"
       ],
       "expected_keywords": [
-        "next step",
-        "document loading"
+        "Python",
+        ".venv",
+        "embedding",
+        "mock LLM",
+        "内存向量检索"
       ],
       "keyword_hit_count": 1,
-      "expected_source": "data/raw/sample.txt",
-      "source_hit": true
+      "expected_source": "docs/problems_and_solutions.md",
+      "source_hit": false,
+      "source_evaluable": true
     },
     {
-      "id": "q008",
-      "query": "PDF loader 的样本文档用途是什么？",
-      "case_type": "in_corpus",
-      "note": "当前索引语料内的问题",
-      "answer": "这是基于检索片段生成的简化回答：RAGHub PDF loader sample. \n \nThis PDF file is used",
+      "id": "q010",
+      "query": "RAGHub 作者的手机号是多少？",
+      "case_type": "out_of_corpus",
+      "note": "当前索引中没有作者手机号信息，应作为 no-answer 风险样本观察",
+      "answer": "这是基于检索片段生成的简化回答：- `score`",
+      "is_answerable": true,
+      "reason": "retrieval_evidence_found",
       "retrieved_chunks": [
         {
-          "chunk_id": "4",
-          "score": 0.6724008321762085,
-          "content": "RAGHub PDF loader sample. \n \nThis PDF file is used",
-          "source": "data/raw/sample.pdf",
-          "file_type": "pdf",
-          "page": 1
+          "chunk_id": "26",
+          "score": 0.5200334191322327,
+          "content": "\n- `score`\n- `content`\n- `source`\n- `file_type`\n- `page`\n\n示例输出：\n\n```text\nquery: RAGHub 当前支持哪些文档处理能力？\ntop_k: 3\n--------------------------------------------------------------------------------\nrank: 1\nchunk_id: 0\nscore: 0.6051\nsource: data/raw/sample.txt\nfile_type: txt\npage: None\ncontent:\nRAGHub is a local document question answering proj\n--------------------------------------------------------------------------------\nrank: 2\nchunk_id: 4\nscore: 0.5645\nsource: data/raw/sample.pdf\nfile_type: pdf\npag",
+          "source": "README.md",
+          "file_type": "md",
+          "page": null
         },
         {
-          "chunk_id": "6",
-          "score": 0.5142688751220703,
-          "content": "The next step is page-based PDF text extraction. ",
-          "source": "data/raw/sample.pdf",
-          "file_type": "pdf",
-          "page": 1
+          "chunk_id": "2",
+          "score": 0.5068695545196533,
+          "content": "# RAGHub\n\nRAGHub 是一个面向本地文档的轻量级 RAG 应用后端系统，用于演示从文档导入、文本切块、embedding、向量检索、API 封装到最小 eval 的完整链路。\n\n## 当前状态\n\n当前 v0.2 已完成：\n\n- TXT / PDF 文档导入\n- 统一 `Document` 对象\n- 固定长度 + overlap 文本切块\n- 本地 embedding baseline\n- 内存版向量相似度检索\n- `POST /retrieve` 检索 API\n- `POST /chat` 最小 RAG API\n- mock LLM client\n- 可选 DeepSeek LLM provider\n- 最小 RAG eval\n- 项目问题沉淀与面试材料\n\n当前 `/chat` 默认使用 mock LLM client；如本地配置 `LLM_PROVIDER=deepseek` 和 `DEEPSEEK_API_KEY`，可选调用 DeepSeek。当前 eval 是小样本规则化评测，不是工业级自动评测系统。\n\n## 核心链路\n\n```text\nTXT/PDF\n-> Docu",
+          "source": "README.md",
+          "file_type": "md",
+          "page": null
+        },
+        {
+          "chunk_id": "0",
+          "score": 0.5061869025230408,
+          "content": "RAGHub is a local document question answering project.\nIt currently supports FastAPI skeleton, config, logging, and basic tests.\nThe next step is document loading.",
+          "source": "data/raw/sample.txt",
+          "file_type": "txt",
+          "page": null
+        }
+      ],
+      "top_score": 0.5200334191322327,
+      "matched_keywords": [],
+      "expected_keywords": [
+        "资料不足",
+        "无法",
+        "当前知识库"
+      ],
+      "keyword_hit_count": 0,
+      "expected_source": null,
+      "source_hit": false,
+      "source_evaluable": false
+    },
+    {
+      "id": "q011",
+      "query": "明天线上用户量是多少？",
+      "case_type": "out_of_corpus",
+      "note": "当前索引中没有未来线上用户量信息，应作为 no-answer 风险样本观察",
+      "answer": "这是基于检索片段生成的简化回答：## 当前边界",
+      "is_answerable": true,
+      "reason": "retrieval_evidence_found",
+      "retrieved_chunks": [
+        {
+          "chunk_id": "42",
+          "score": 0.41463351249694824,
+          "content": "## 当前边界\n\n当前项目仍是学习型与求职展示型工程项目，不承诺生产级能力。\n\n当前暂不包含：\n\n- DOCX loader\n- OCR\n- 扫描版 PDF 解析\n- 复杂表格解析\n- GraphRAG\n- 多租户权限\n- 高并发任务队列\n- 完整向量数据库\n- BM25 / hybrid retrieval\n- rerank\n- 生产级真实 LLM RAG 问答接口\n- 前端页面\n- Docker 部署\n\n这些内容会在后续阶段按优先级逐步评估，不进入当前 Day 13 范围。\n",
+          "source": "README.md",
+          "file_type": "md",
+          "page": null
         },
         {
           "chunk_id": "5",
-          "score": 0.48195022344589233,
-          "content": "le is used to test document loading. \n \nThe next s",
-          "source": "data/raw/sample.pdf",
-          "file_type": "pdf",
-          "page": 1
-        }
-      ],
-      "top_score": 0.6724008321762085,
-      "matched_keywords": [
-        "PDF",
-        "loader",
-        "sample",
-        "test document loading"
-      ],
-      "expected_keywords": [
-        "PDF",
-        "loader",
-        "sample",
-        "test document loading"
-      ],
-      "keyword_hit_count": 4,
-      "expected_source": "data/raw/sample.pdf",
-      "source_hit": true
-    },
-    {
-      "id": "q009",
-      "query": "PDF loader 下一步计划支持什么提取方式？",
-      "case_type": "in_corpus",
-      "note": "当前索引语料内的问题",
-      "answer": "这是基于检索片段生成的简化回答：RAGHub PDF loader sample. \n \nThis PDF file is used",
-      "retrieved_chunks": [
-        {
-          "chunk_id": "4",
-          "score": 0.6393053531646729,
-          "content": "RAGHub PDF loader sample. \n \nThis PDF file is used",
-          "source": "data/raw/sample.pdf",
-          "file_type": "pdf",
-          "page": 1
+          "score": 0.3975822925567627,
+          "content": "sources`、`is_answerable` 和 `reason`，用于展示引用证据和无答案拒答原因。\n\n## Eval 摘要\n\n当前最小 eval 结果：\n\n```text\nall_total: 11\nall_source_hits: 6/9\nin_corpus_total: 9\nout_of_corpus_total: 2\n```\n\n`out_of_corpus` 用于观察当前知识库之外的问题，例如作者手机号、未来线上用户量等。\n\nDay 18 已补充真实 DeepSeek 回答质量小样本人工评审：`eval/llm_answer_review.md`。\n\nDay 19 已将 README、核心 docs 和 eval 文档纳入索引；后续需要基于新索引重新进行一轮 LLM answer review。\n\n## 当前边界\n\nRAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。\n\n当前不包含：\n\n- 默认配置下不调用外部 LLM API\n- streaming / SSE\n- Agent 或工具调用\n- Qdrant / Milvus / pgvector\n",
+          "source": "README.md",
+          "file_type": "md",
+          "page": null
         },
         {
-          "chunk_id": "6",
-          "score": 0.5627071857452393,
-          "content": "The next step is page-based PDF text extraction. ",
-          "source": "data/raw/sample.pdf",
-          "file_type": "pdf",
-          "page": 1
-        },
-        {
-          "chunk_id": "5",
-          "score": 0.4728812873363495,
-          "content": "le is used to test document loading. \n \nThe next s",
-          "source": "data/raw/sample.pdf",
-          "file_type": "pdf",
-          "page": 1
+          "chunk_id": "37",
+          "score": 0.3907697796821594,
+          "content": "val 会走真实 embedding 检索，首次运行可能因为模型加载或下载而较慢。\n- 当前向量数据只来自 `chunks_preview.jsonl`，README 中的项目说明还没有进入检索索引。\n- keyword 命中只能作为粗粒度信号，不能代表完整回答质量。\n\n后续增强方向：\n\n- 扩展更多问题集和不同来源文档。\n- 增加自动化指标，例如 source hit rate、keyword hit rate、answer 引用覆盖率。\n- 持续沉淀失败案例，分析召回失败和回答不足的原因。\n\n---\n\n## Design Docs\n\n当前已有设计说明：\n\n- `docs/design/preprocessing_pipeline.md`\n  - 说明 Week 2 文档导入与预处理主链路\n  - 包括 TXT/PDF 输入、Document 统一、固定长度 + overlap 切块、chunk 预览输出\n\n- `docs/design/embedding_baseline_plan.md`\n  - 说明 Week 3 embedding baseline 的准备方向\n  - 包括 ",
+          "source": "README.md",
+          "file_type": "md",
+          "page": null
         }
       ],
-      "top_score": 0.6393053531646729,
+      "top_score": 0.41463351249694824,
       "matched_keywords": [
-        "page-based",
-        "PDF",
-        "text extraction"
+        "当前知识库"
       ],
       "expected_keywords": [
-        "page-based",
-        "PDF",
-        "text extraction"
+        "资料不足",
+        "无法",
+        "当前知识库"
       ],
-      "keyword_hit_count": 3,
-      "expected_source": "data/raw/sample.pdf",
-      "source_hit": true
+      "keyword_hit_count": 1,
+      "expected_source": null,
+      "source_hit": false,
+      "source_evaluable": false
     }
   ]
 }

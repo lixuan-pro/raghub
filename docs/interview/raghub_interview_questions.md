@@ -194,15 +194,15 @@ cosine similarity 衡量向量方向相似度，适合比较归一化后的语�
 
 ### 回答要点
 
-当前索引来自处理后的 chunks 和 embeddings，不包含 README。
+Day 19 后，当前索引来自 sample TXT/PDF、README、核心 docs 和 eval 文档生成的 chunks 与 embeddings。
 
 ### 项目中的具体实现
 
-`chunks_preview.jsonl` 保存文本片段，`chunk_embeddings.npy` 保存向量矩阵。
+`chunks_preview.jsonl` 保存文本片段和 source，`chunk_embeddings.npy` 保存向量矩阵；当前索引中已包含 README、`docs/raghub_v0_2_scope.md`、`docs/problems_and_solutions.md`、`eval/bad_cases.md` 和 `eval/llm_answer_review.md`。
 
 ### 后续可增强
 
-把 README、docs 和更多业务文档纳入索引。
+继续纳入更多业务文档，并通过更细粒度 chunk、rerank 或向量数据库优化 source 命中。
 
 ## Q：如何判断检索结果是否合理？
 
@@ -308,19 +308,19 @@ Day 16 增加 `is_answerable` 和 `reason`，无 chunk 或低 score 时拒答。
 
 增加更多问题、人工标注、自动指标和失败案例分析。
 
-## Q：为什么 README 相关问题是 boundary_case？
+## Q：为什么 Day 19 后 README 相关问题不再是 boundary_case？
 
 ### 回答要点
 
-因为当前向量索引只包含 sample chunks，README 没有进入索引。
+Day 18 之前 README 没有进入索引，所以 README/API 问题是 boundary_case。Day 19 已将 README 和核心 docs 纳入索引，因此这些问题应调整为 in_corpus。
 
 ### 项目中的具体实现
 
-`queries.jsonl` 中 README/API 问题标记为 `boundary_case`，summary 单独统计。
+`queries.jsonl` 中 README/API 问题已标记为 `in_corpus`，真正没有知识来源的问题使用 `out_of_corpus`，例如作者手机号或未来线上用户量。
 
 ### 后续可增强
 
-把 README 和 docs 纳入文档导入流程。
+后续可以把更多业务文档纳入索引，并针对 source 竞争问题做 eval 和 rerank 优化。
 
 ## Q：keyword hit 有什么局限？
 

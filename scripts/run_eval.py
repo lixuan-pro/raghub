@@ -43,6 +43,19 @@ def match_keywords(
     ]
 
 
+def is_source_hit(
+    expected_source: str | None,
+    retrieved_chunks: list[dict[str, Any]],
+) -> bool:
+    if not expected_source:
+        return False
+
+    return any(
+        chunk.get("source") == expected_source
+        for chunk in retrieved_chunks
+    )
+
+
 def evaluate_query(item: dict[str, Any], top_k: int = 3) -> dict[str, Any]:
     response = generate_chat_response(query=item["query"], top_k=top_k)
     retrieved_chunks = response["retrieved_chunks"]
@@ -55,10 +68,6 @@ def evaluate_query(item: dict[str, Any], top_k: int = 3) -> dict[str, Any]:
         answer=response["answer"],
         retrieved_chunks=retrieved_chunks,
     )
-    source_hit = any(
-        chunk.get("source") == expected_source
-        for chunk in retrieved_chunks
-    )
 
     return {
         "id": item["id"],
@@ -66,25 +75,36 @@ def evaluate_query(item: dict[str, Any], top_k: int = 3) -> dict[str, Any]:
         "case_type": item.get("case_type", "in_corpus"),
         "note": item.get("note", ""),
         "answer": response["answer"],
+        "is_answerable": response.get("is_answerable"),
+        "reason": response.get("reason"),
         "retrieved_chunks": retrieved_chunks,
         "top_score": top_score,
         "matched_keywords": matched_keywords,
         "expected_keywords": expected_keywords,
         "keyword_hit_count": len(matched_keywords),
         "expected_source": expected_source,
-        "source_hit": source_hit,
+        "source_hit": is_source_hit(expected_source, retrieved_chunks),
+        "source_evaluable": bool(expected_source),
     }
 
 
 def build_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
-    source_hits = sum(1 for item in results if item["source_hit"])
+    source_evaluable = [item for item in results if item.get("source_evaluable")]
+    source_hits = sum(1 for item in source_evaluable if item["source_hit"])
     total_keyword_hits = sum(item["keyword_hit_count"] for item in results)
     total_expected_keywords = sum(len(item["expected_keywords"]) for item in results)
+    answerable_count = sum(1 for item in results if item.get("is_answerable"))
 
     return {
         "total": len(results),
+        "answerable_count": answerable_count,
         "source_hits": source_hits,
-        "source_hit_rate": source_hits / len(results) if results else 0,
+        "source_evaluable": len(source_evaluable),
+        "source_hit_rate": (
+            source_hits / len(source_evaluable)
+            if source_evaluable
+            else 0
+        ),
         "keyword_hits": total_keyword_hits,
         "expected_keywords": total_expected_keywords,
         "keyword_hit_rate": (
@@ -98,10 +118,7 @@ def build_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
 def group_results_by_case_type(
     results: list[dict[str, Any]],
 ) -> dict[str, list[dict[str, Any]]]:
-    grouped = {
-        "in_corpus": [],
-        "boundary_case": [],
-    }
+    grouped: dict[str, list[dict[str, Any]]] = {}
 
     for item in results:
         case_type = item.get("case_type", "in_corpus")
@@ -110,23 +127,37 @@ def group_results_by_case_type(
     return grouped
 
 
+def collect_case_notes(results: list[dict[str, Any]]) -> dict[str, list[str]]:
+    grouped = group_results_by_case_type(results)
+    notes: dict[str, list[str]] = {}
+
+    for case_type, items in grouped.items():
+        notes[case_type] = sorted(
+            {
+                item["note"]
+                for item in items
+                if item.get("note")
+            }
+        )
+
+    return notes
+
+
 def run_eval() -> dict[str, Any]:
     queries = load_eval_queries()
     results = [evaluate_query(item) for item in queries]
     grouped_results = group_results_by_case_type(results)
 
+    case_type_summaries = {
+        case_type: build_summary(items)
+        for case_type, items in sorted(grouped_results.items())
+    }
+
     report = {
         "summary": {
             "all_cases": build_summary(results),
-            "in_corpus": build_summary(grouped_results.get("in_corpus", [])),
-            "boundary_case": build_summary(grouped_results.get("boundary_case", [])),
-            "boundary_case_notes": sorted(
-                {
-                    item["note"]
-                    for item in grouped_results.get("boundary_case", [])
-                    if item.get("note")
-                }
-            ),
+            "case_types": case_type_summaries,
+            "case_type_notes": collect_case_notes(results),
         },
         "results": results,
     }
@@ -140,39 +171,39 @@ def run_eval() -> dict[str, Any]:
     return report
 
 
+def print_summary_line(prefix: str, summary: dict[str, Any]) -> None:
+    print(f"{prefix}_total: {summary['total']}")
+    print(f"{prefix}_answerable: {summary['answerable_count']}/{summary['total']}")
+    print(
+        f"{prefix}_source_hits: "
+        f"{summary['source_hits']}/{summary['source_evaluable']}"
+    )
+    print(f"{prefix}_source_hit_rate: {summary['source_hit_rate']:.2f}")
+    print(
+        f"{prefix}_keyword_hits: "
+        f"{summary['keyword_hits']}/{summary['expected_keywords']}"
+    )
+    print(f"{prefix}_keyword_hit_rate: {summary['keyword_hit_rate']:.2f}")
+
+
 def main() -> None:
     report = run_eval()
     summary = report["summary"]
     all_cases = summary["all_cases"]
-    in_corpus = summary["in_corpus"]
-    boundary_case = summary["boundary_case"]
 
     print("RAGHub eval summary")
-    print(f"total: {all_cases['total']}")
-    print(f"all_source_hits: {all_cases['source_hits']}/{all_cases['total']}")
-    print(f"all_source_hit_rate: {all_cases['source_hit_rate']:.2f}")
-    print(
-        "all_keyword_hits: "
-        f"{all_cases['keyword_hits']}/{all_cases['expected_keywords']}"
-    )
-    print(f"all_keyword_hit_rate: {all_cases['keyword_hit_rate']:.2f}")
-    print(f"in_corpus_total: {in_corpus['total']}")
-    print(
-        "in_corpus_source_hits: "
-        f"{in_corpus['source_hits']}/{in_corpus['total']}"
-    )
-    print(
-        "in_corpus_keyword_hits: "
-        f"{in_corpus['keyword_hits']}/{in_corpus['expected_keywords']}"
-    )
-    print(f"boundary_case_total: {boundary_case['total']}")
-    print(
-        "boundary_case_source_hits: "
-        f"{boundary_case['source_hits']}/{boundary_case['total']}"
-    )
-    print("boundary_case_notes:")
-    for note in summary["boundary_case_notes"]:
-        print(f"- {note}")
+    print_summary_line("all", all_cases)
+
+    for case_type, case_summary in summary["case_types"].items():
+        print(f"{case_type}:")
+        print_summary_line(case_type, case_summary)
+
+    print("case_type_notes:")
+    for case_type, notes in summary["case_type_notes"].items():
+        print(f"- {case_type}:")
+        for note in notes:
+            print(f"  - {note}")
+
     print(f"output: {RESULTS_PATH}")
 
 

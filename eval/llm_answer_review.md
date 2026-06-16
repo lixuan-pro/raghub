@@ -202,6 +202,7 @@
 ## 8. 后续改进
 
 - 将 README、API 文档和设计文档纳入索引，减少 boundary case 被误判。
+- Day 19 将 README 和核心 docs 纳入索引后，需要重新评审 sources 支撑情况。
 - 基于更多 bad cases 调整 no-answer 阈值。
 - 在 prompt 中要求模型显式指出“哪些 source 支撑了哪些结论”。
 - 增加 answer-grounding 检查，避免回答和 retrieved sources 脱节。
