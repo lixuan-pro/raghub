@@ -1,4 +1,4 @@
-# RAGHub v0.2 Scope
+# RAGHub v0.2 范围说明
 
 ## 1. 项目定位
 

@@ -1,4 +1,4 @@
-# RAGHub Bad Cases
+# RAGHub Bad Case 复盘
 
 本文档记录 RAGHub v0.2 阶段已经暴露的 bad case。它们不是生产事故，而是当前最小 RAG 链路的真实边界，用于后续迭代和面试复盘。
 

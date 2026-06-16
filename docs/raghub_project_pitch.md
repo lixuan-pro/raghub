@@ -1,4 +1,4 @@
-# RAGHub Project Pitch
+# RAGHub 项目讲解稿
 
 ## 1. 30 秒版本
 

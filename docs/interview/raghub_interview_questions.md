@@ -1,4 +1,4 @@
-# RAGHub Interview Questions
+# RAGHub 面试高频问答
 
 ## RAG 基础链路
 

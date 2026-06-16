@@ -2,7 +2,7 @@
 
 RAGHub 是一个面向本地文档的轻量级 RAG 应用后端系统，用于演示从文档导入、文本切块、embedding、向量检索、API 封装到最小 eval 的完整链路。
 
-## Current Status
+## 当前状态
 
 当前 v0.2 已完成：
 
@@ -19,7 +19,7 @@ RAGHub 是一个面向本地文档的轻量级 RAG 应用后端系统，用于�
 
 当前 `/chat` 使用 mock LLM client，不调用外部大模型 API。当前 eval 是小样本规则化评测，不是工业级自动评测系统。
 
-## Pipeline
+## 核心链路
 
 ```text
 TXT/PDF
@@ -41,7 +41,7 @@ data/processed/chunk_embeddings.npy
 
 README/API 文档本身尚未进入向量索引，因此 README/API 相关 eval 问题被标记为 `boundary_case`。
 
-## Quick Start
+## 快速运行
 
 ```powershell
 cd E:\Code\Py\raghub
@@ -56,7 +56,7 @@ python scripts\run_eval.py
 uvicorn app.main:app --reload
 ```
 
-## API Quick Examples
+## API 示例
 
 `POST /retrieve`
 
@@ -79,7 +79,7 @@ uvicorn app.main:app --reload
 `/chat` 返回 `answer` 和 `retrieved_chunks`，其中 `retrieved_chunks` 保留 `source`、`page`、`score`，便于解释回答来源。
 Day 16 起，`/chat` 还会返回 `sources`、`is_answerable` 和 `reason`，用于展示引用证据和无答案拒答原因。
 
-## Eval Snapshot
+## Eval 摘要
 
 当前最小 eval 结果：
 
@@ -92,7 +92,7 @@ boundary_case_total: 2
 
 `boundary_case` 用于暴露当前索引范围限制，例如 README 尚未进入向量索引。
 
-## Current Boundary
+## 当前边界
 
 RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。
 
@@ -107,7 +107,7 @@ RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。
 - Docker 部署
 - 多租户、权限和生产级并发能力
 
-## Roadmap
+## 后续规划
 
 - 接入真实 DeepSeek / OpenAI LLM client
 - 增加 streaming/SSE
@@ -920,7 +920,7 @@ python -m pytest
 
 ---
 
-## Roadmap
+## 后续规划
 
 接下来计划：
 
@@ -960,7 +960,7 @@ python -m pytest
 
 ---
 
-## Current Boundary
+## 当前边界
 
 当前项目仍是学习型与求职展示型工程项目，不承诺生产级能力。
 
