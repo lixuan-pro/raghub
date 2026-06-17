@@ -19,7 +19,7 @@ query -> retrieve_chunks -> build_rag_prompt -> DeepSeekLLMClient -> /chat respo
 - 样本类型：`in_corpus`、明确不支持但可回答的能力问题、`out_of_corpus`
 - 检索数据：`data/processed/chunks_preview.jsonl`
 - 向量数据：`data/processed/chunk_embeddings.npy`
-- 当前 chunk 数量：75
+- 当前 chunk 数量：85
 
 本轮重点观察：
 
