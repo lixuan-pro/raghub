@@ -302,7 +302,7 @@ Day 16 增加 `is_answerable` 和 `reason`，无 chunk 或低 score 时拒答。
 
 ### 项目中的具体实现
 
-`scripts/run_eval.py` 读取 `eval/queries.jsonl`，输出 `eval/results.json`。Day 18 增加 `eval/llm_answer_review.md`，记录真实 DeepSeek 回答质量的小样本人工评审。Day 20 增加 `expected_answerable`，用于统计可回答性判断是否符合预期。
+`scripts/run_eval.py` 读取 `eval/queries.jsonl`，输出 `eval/results.json`。Day 20 增加 `expected_answerable`，用于统计可回答性判断是否符合预期。Day 21B 基于扩展后的 README/docs/eval 索引重新补充 `eval/llm_answer_review.md`，记录真实 DeepSeek 回答质量的小样本人工评审。
 
 ### 后续可增强
 
@@ -354,11 +354,11 @@ eval 会检查 retrieved_chunks 中是否包含 expected_source。
 
 ### 回答要点
 
-先看 in-corpus 的 source hit，再看 keyword hit；boundary case 要单独解释。
+先看 in-corpus 的 source hit，再看 keyword hit；再看 `expected_answerable` 与 `is_answerable` 是否一致。`out_of_corpus` 样本要单独解释，因为它主要检验 no-answer 策略。
 
 ### 项目中的具体实现
 
-当前 in-corpus source hit 是 7/7，boundary case 暴露 README 未入索引。
+当前 eval 已区分 `in_corpus` 和 `out_of_corpus`。README/API 相关问题在 Day 19 后已经进入索引，不再作为 README 未入库的 boundary case；Day 20 重点观察作者手机号、未来线上用户量等真正无知识来源问题是否被拒答。Day 21B 的真实 DeepSeek review 进一步暴露了 source 命中竞争问题，例如 `/retrieve` 字段问题可能命中 `/chat` 响应示例。
 
 ### 后续可增强
 

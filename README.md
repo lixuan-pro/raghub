@@ -87,18 +87,19 @@ Day 16 起，`/chat` 还会返回 `sources`、`is_answerable` 和 `reason`，用
 ```text
 all_total: 11
 all_answerable: 9/11
-all_answerable_accuracy: 1.00
+all_answerability_judgment_accuracy: 1.00
 all_expected_unanswerable_reject_rate: 1.00
 all_source_hits: 7/9
+all_keyword_hit_rate: 0.64
 in_corpus_total: 9
 out_of_corpus_total: 2
 ```
 
+注意：这里的 `answerability_judgment_accuracy` 对应 `run_eval.py` 输出中的 `all_answerable_accuracy`，衡量的是系统层 `is_answerable` 判断是否符合人工 `expected_answerable` 标注，不代表 LLM 回答准确率，也不代表生产级准确率。当前 `source_hit` 和 `keyword_hit` 仍然说明检索质量有继续改进空间。
+
 `out_of_corpus` 用于观察当前知识库之外的问题，例如作者手机号、未来线上用户量等。
 
-Day 18 已补充真实 DeepSeek 回答质量小样本人工评审：`eval/llm_answer_review.md`。
-
-Day 19 已将 README、核心 docs 和 eval 文档纳入索引；后续需要基于新索引重新进行一轮 LLM answer review。
+Day 21B 已基于 Day 20 / Day 21 后的新索引补充真实 DeepSeek 小样本人工评审：`eval/llm_answer_review.md`。该评审是小样本人工观察，不代表 LLM 准确率或生产级质量证明。
 
 Day 20 已在 eval 中加入 `expected_answerable`，并为 `/chat` 增加轻量 out-of-scope 防护，用于降低明显 out-of-corpus 问题被误判为可回答的风险。
 
@@ -127,36 +128,12 @@ RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。
 - 扩展 eval 问题集和失败案例分析
 - 增加 Docker 部署
 
-RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步完成文档导入、文本切块、embedding、检索召回、问答生成与评测展示的完整链路。
+## 当前实现明细
 
-当前项目已完成 Week 1 工程骨架、Week 2 文档导入与预处理链路，并进入 Week 3 embedding 与向量检索准备阶段。
-
-当前已经支持：
-
-- TXT/PDF 最小读取
-- 统一 `Document` 对象
-- 固定长度 + overlap 文本切块
-- 预处理结果落盘为 `chunks_preview.jsonl`
-- 本地 embedding baseline
-- 将 chunks 转换为向量并保存为 `.npy`
-- 内存版向量相似度 top-k 检索 baseline
-
-当前已完成 FastAPI `/retrieve` 接口与最小 `/chat` 问答接口，`/chat` 默认使用 mock LLM，并支持可选 DeepSeek provider；暂未进入完整向量库、BM25、混合检索或生产级 RAG 生成阶段。
-
----
-
-## Current Stage
-
-当前阶段状态：
-
-- Week 1：工程骨架与基础设施【已完成】
-- Week 2：文档导入与预处理【已完成】
-- Week 3：embedding baseline 与内存版向量检索 baseline【进行中】
-
-当前已完成的主链路：
+当前项目已完成从文档导入到最小 RAG API、eval 和问题复盘的 v0.2 主链路：
 
 ```text
-原始 TXT / PDF 文档
+原始 TXT / PDF / Markdown 文档
 → loader 读取
 → Document 统一表示
 → 固定长度 + overlap 文本切块
@@ -166,9 +143,12 @@ RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步�
 → query embedding
 → cosine similarity
 → top-k chunks
+→ /retrieve
+→ /chat
+→ eval / bad cases / LLM answer review
 ```
 
-当前重点是先完成本地检索 baseline，为后续 `/retrieve` API 和 RAG 问答接口打基础。
+当前仍使用内存版向量检索，尚未接入 Qdrant / Milvus / pgvector，也没有实现 BM25、hybrid retrieval 或 rerank。
 
 ---
 
@@ -208,7 +188,10 @@ RAGHub 是一个面向本地文档的检索增强问答系统，目标是逐步�
 - `app/retrievers/vector_retriever.py` 内存版向量相似度检索模块
 - `scripts/retrieve_demo.py` 最小检索 demo 脚本
 - `tests/test_vector_retriever.py` 向量相似度测试
-- `eval/queries.jsonl` Week 1 / Week 2 最小评测占位样例
+- `eval/queries.jsonl` 最小 RAG eval 样例，包含 `in_corpus` 与 `out_of_corpus`
+- `eval/results.json` eval 运行结果
+- `eval/bad_cases.md` bad case 复盘
+- `eval/llm_answer_review.md` DeepSeek 小样本人工评审历史记录
 - `docs/design/preprocessing_pipeline.md` 文档导入与预处理链路设计说明
 - `docs/design/embedding_baseline_plan.md` embedding baseline 准备说明
 - `docs/weekly_logs/week1.md`
@@ -507,6 +490,11 @@ python scripts/build_chunks_demo.py
 ```text
 data/raw/sample.txt
 data/raw/sample.pdf
+README.md
+docs/raghub_v0_2_scope.md
+docs/problems_and_solutions.md
+eval/bad_cases.md
+eval/llm_answer_review.md
 → loader
 → list[Document]
 → chunk_documents()
@@ -518,7 +506,8 @@ data/raw/sample.pdf
 ```text
 txt documents: 1
 pdf documents: 1
-chunks: 7
+markdown documents: 5
+chunks: 85
 output: data/processed/chunks_preview.jsonl
 ```
 
@@ -577,8 +566,8 @@ BAAI/bge-base-zh-v1.5
 当前运行结果：
 
 ```text
-chunks: 7
-embedding shape: (7, 768)
+chunks: 85
+embedding shape: (85, 768)
 model: BAAI/bge-base-zh-v1.5
 output: data/processed/chunk_embeddings.npy
 meta: data/processed/chunk_embeddings_meta.json
@@ -868,6 +857,7 @@ eval/queries.jsonl
 - `expected_source`
 - `case_type`
 - `note`
+- `expected_answerable`
 
 输出文件：
 
@@ -883,16 +873,21 @@ eval/results.json
 - `matched_keywords`
 - `keyword_hit_count`
 - `source_hit`
+- `is_answerable`
+- `expected_answerable`
+- `answerable_correct`
 
-控制台会输出简短 summary，包括 all cases、in-corpus cases 和 boundary cases 的 source 命中数量与 keyword 命中数量。
+控制台会输出简短 summary，包括 all cases、in-corpus cases 和 out-of-corpus cases 的 source 命中、keyword 命中和可回答性判断统计。
+
+注意：`all_answerable_accuracy` 衡量的是系统层 `is_answerable` 判断是否符合人工 `expected_answerable` 标注，不代表 LLM 生成答案准确率，也不代表生产级准确率。
 
 当前评测边界：
 
 - 这是小样本、规则化、人工辅助判断的最小 eval。
-- eval 包含主评测样例和边界案例；边界案例用于暴露当前索引范围限制，不应直接视为普通检索失败。
+- eval 包含主评测样例和 `out_of_corpus` 风险样例；后者用于观察 no-answer 策略，不应直接视为普通检索失败。
 - 默认使用 mock LLM client；DeepSeek 仅作为可选 provider，需要本地环境变量配置。
 - eval 会走真实 embedding 检索，首次运行可能因为模型加载或下载而较慢。
-- 当前向量数据只来自 `chunks_preview.jsonl`，README 中的项目说明还没有进入检索索引。
+- 当前索引语料已包含 sample TXT/PDF、README、核心 docs 和 eval 文档，但仍是小规模本地索引。
 - keyword 命中只能作为粗粒度信号，不能代表完整回答质量。
 
 后续增强方向：
@@ -952,7 +947,7 @@ python -m pytest
 当前测试结果：
 
 ```text
-20 passed
+34 passed
 ```
 
 ---
@@ -977,7 +972,7 @@ python -m pytest
    - 预处理结果落盘与 chunk 预览【已完成】
    - Week 2 设计说明与阶段小结【已完成】
 
-3. Week 3：embedding 与最小向量检索 baseline【进行中】
+3. Week 3：embedding 与最小向量检索 baseline【已完成】
    - 读取 `chunks_preview.jsonl`【已完成】
    - 提取 chunk content【已完成】
    - 调用 embedding 模型【已完成】
@@ -988,12 +983,14 @@ python -m pytest
    - 封装 `/retrieve` API【已完成】
    - 封装 mock `/chat` API【已完成】
 
-4. 后续逐步实现
-   - 检索评测扩展
-   - 完善真实 LLM provider 的 RAG 问答接口
-   - 回答引用来源
-   - 失败案例整理
-   - README / Demo / 简历 / 论文材料完善
+4. v0.2 展示收口【已完成】
+   - `/retrieve` API【已完成】
+   - `/chat` API【已完成】
+   - sources / citation【已完成】
+   - no-answer 与轻量 out-of-scope 防护【已完成】
+   - 可选 DeepSeek provider【已完成】
+   - 最小 eval、bad cases 和 LLM answer review【已完成】
+   - README、docs 和 eval 文档入库索引【已完成】
 
 ---
 
@@ -1017,4 +1014,4 @@ python -m pytest
 - 前端页面
 - Docker 部署
 
-这些内容会在后续阶段按优先级逐步评估，不进入当前 Day 13 范围。
+这些内容会在后续阶段按优先级逐步评估，不属于当前 v0.2 已完成能力。

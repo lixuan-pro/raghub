@@ -90,15 +90,13 @@ eval/results.json
 
 - all cases source hit
 - in-corpus source hit
-- boundary case source hit
+- out-of-corpus answerability judgment
 - keyword hit
-- boundary case notes
+- case type notes
 
 Day 19 起，README/API 相关问题已调整为 `in_corpus`；真正缺少知识来源的问题使用 `out_of_corpus` 标记。
 
-Day 18 已补充 `eval/llm_answer_review.md`，用于记录真实 DeepSeek provider 的小样本回答质量人工评审。
-
-Day 19 已将 README、核心 docs 和 eval 文档纳入索引；后续需要基于新索引重新进行一轮 LLM answer review。
+Day 21B 已基于 Day 20 / Day 21 后的新索引补充真实 DeepSeek 小样本回答质量人工评审。当前 review 记录了 7 条样本，其中 out-of-corpus 样本能正确拒答，也暴露了 `/retrieve` 字段问题命中 `/chat` 片段导致字段混淆的 bad case。
 
 Day 20 已在 eval 中加入 `expected_answerable`，并为 `/chat` 增加轻量 out-of-scope 防护。当前目标是降低作者手机号、未来线上用户量等明显 out-of-corpus 问题被误判为可回答的风险。
 
@@ -118,7 +116,7 @@ Day 20 已在 eval 中加入 `expected_answerable`，并为 `/chat` 增加轻量
 - 增加 streaming / SSE
 - 抽象 vector store interface
 - 接入 Qdrant 或 pgvector
-- 将 README、设计文档和更多业务文档纳入索引
+- 将更多业务文档纳入索引
 - 增加更系统的 eval
 - 记录失败案例并做召回分析
 - 基于更多 eval case 调整 no-answer 阈值

@@ -2,17 +2,17 @@
 
 本文档记录 RAGHub v0.2 阶段已经暴露的 bad case。它们不是生产事故，而是当前最小 RAG 链路的真实边界，用于后续迭代和面试复盘。
 
-## CASE-001：README/API 问题未命中
+## CASE-001：README/API 问题未命中（历史案例，Day 19 已修复）
 
 - query: 项目当前支持哪些接口？
 - expected: 能回答 `/health`、`/version`、`/retrieve`、`/chat` 等接口信息。
 - retrieved_chunks: 当前主要来自 `data/raw/sample.txt` 和 `data/raw/sample.pdf`。
 - answer: mock LLM 只能基于 sample 文档片段生成简化回答，无法稳定回答 README/API 文档中的接口清单。
-- problem_type: boundary_case
-- root_cause: 当前向量索引只包含 `chunks_preview.jsonl` 中的 sample 文档内容，README 和 API 文档尚未进入向量索引。
-- current_solution: 在 `eval/queries.jsonl` 中将 README/API 相关问题标记为 `boundary_case`，并在 eval summary 中单独统计。
-- next_fix: 将 README、docs 和 API 说明纳入文档导入与索引构建流程。
-- interview_explanation: 这个 case 说明 RAG 只能回答已经进入索引的知识。项目中我没有把 README 未命中误判为普通检索失败，而是把它标记为 boundary case，明确暴露当前索引范围限制。
+- problem_type: historical_boundary_case
+- root_cause: Day 18 之前，向量索引主要来自 sample TXT/PDF，README 和 API 文档尚未进入向量索引。
+- current_solution: Day 19 已将 README、核心 docs 和 eval 文档纳入索引，README/API 相关问题已调整为 `in_corpus`。
+- next_fix: 继续观察扩展索引后的 source 命中竞争，并通过更细粒度 chunk、rerank 或更系统的 eval 改进。
+- interview_explanation: 这个历史 case 说明 RAG 只能回答已经进入索引的知识。项目中我没有把 README 未命中误判为普通检索失败，而是先标记为边界问题，随后在 Day 19 把 README/docs 纳入索引并更新 eval case 类型。
 
 ## CASE-002：低相关 query 触发 no-answer
 
@@ -68,3 +68,43 @@ sources=[]
 - current_solution: README 和 scope 文档明确说明 `/chat` 使用 mock LLM，不代表真实生成质量。
 - next_fix: 接入 DeepSeek / OpenAI 等真实 LLM provider，并增加引用校验和回答质量 eval。
 - interview_explanation: 我在项目中先用 mock LLM 是为了稳定接口和数据流，而不是假装已经具备真实生成能力。这个 bad case 能说明 mock 阶段和真实 LLM 阶段的边界。
+
+## CASE-006：真实 DeepSeek review 中 `/retrieve` 字段混入 `/chat` 字段
+
+### 背景
+
+Day 21B 基于扩展后的 README/docs/eval 索引重跑真实 DeepSeek 小样本人工评审。其中 query 为：
+
+```text
+RAGHub 的 /retrieve 接口返回哪些字段？
+```
+
+### 表现
+
+系统层判断：
+
+```text
+is_answerable=true
+reason=retrieval_evidence_found
+```
+
+但 DeepSeek 的回答混入了 `/chat` 的字段，例如 `answer`、`is_answerable`、`reason`、`sources`、`retrieved_chunks`。
+
+### 原因
+
+当前 README 中 `/retrieve` 与 `/chat` 示例距离较近，chunk 粒度按固定长度切分，导致 query 虽然问 `/retrieve`，top sources 仍可能命中 `/chat` 响应示例或 LLM review 中的相似片段。
+
+### 当前处理
+
+该问题已记录到 `eval/llm_answer_review.md`，作为 source 命中竞争和接口字段混淆的 bad case。
+
+### 后续改进
+
+- 调整 README/API 文档结构，让 `/retrieve` 和 `/chat` 字段说明更分离。
+- 增加基于 Markdown 标题的 chunk 策略。
+- 增加 rerank 或 source grounding 检查。
+- 在 prompt 中要求模型明确区分不同 API 的字段。
+
+### 面试表达版本
+
+这个 case 说明 RAG 不只是接入真实 LLM 就结束了。即使 sources 来自项目文档，如果 chunk 粒度和 source 选择不够精确，模型也可能把相邻接口的字段混在一起。因此我把它记录为 bad case，后续可以通过更细粒度 chunk、rerank 和 prompt 约束改进。
