@@ -302,7 +302,7 @@ Day 16 增加 `is_answerable` 和 `reason`，无 chunk 或低 score 时拒答。
 
 ### 项目中的具体实现
 
-`scripts/run_eval.py` 读取 `eval/queries.jsonl`，输出 `eval/results.json`。Day 18 增加 `eval/llm_answer_review.md`，记录真实 DeepSeek 回答质量的小样本人工评审。
+`scripts/run_eval.py` 读取 `eval/queries.jsonl`，输出 `eval/results.json`。Day 18 增加 `eval/llm_answer_review.md`，记录真实 DeepSeek 回答质量的小样本人工评审。Day 20 增加 `expected_answerable`，用于统计可回答性判断是否符合预期。
 
 ### 后续可增强
 
@@ -316,11 +316,11 @@ Day 18 之前 README 没有进入索引，所以 README/API 问题是 boundary_c
 
 ### 项目中的具体实现
 
-`queries.jsonl` 中 README/API 问题已标记为 `in_corpus`，真正没有知识来源的问题使用 `out_of_corpus`，例如作者手机号或未来线上用户量。
+`queries.jsonl` 中 README/API 问题已标记为 `in_corpus`，真正没有知识来源的问题使用 `out_of_corpus`，例如作者手机号或未来线上用户量。Day 20 后，`out_of_corpus` 样本会结合 `expected_answerable=false` 统计 reject rate。
 
 ### 后续可增强
 
-后续可以把更多业务文档纳入索引，并针对 source 竞争问题做 eval 和 rerank 优化。
+后续可以把更多业务文档纳入索引，并针对 source 竞争问题做 eval 和 rerank 优化。当前 out-of-scope 防护只是轻量规则，不是生产级意图分类器。
 
 ## Q：keyword hit 有什么局限？
 

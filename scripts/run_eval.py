@@ -61,6 +61,8 @@ def evaluate_query(item: dict[str, Any], top_k: int = 3) -> dict[str, Any]:
     retrieved_chunks = response["retrieved_chunks"]
     expected_keywords = item.get("expected_keywords", [])
     expected_source = item.get("expected_source")
+    expected_answerable = item.get("expected_answerable")
+    is_answerable = bool(response.get("is_answerable"))
 
     top_score = retrieved_chunks[0]["score"] if retrieved_chunks else None
     matched_keywords = match_keywords(
@@ -75,7 +77,13 @@ def evaluate_query(item: dict[str, Any], top_k: int = 3) -> dict[str, Any]:
         "case_type": item.get("case_type", "in_corpus"),
         "note": item.get("note", ""),
         "answer": response["answer"],
-        "is_answerable": response.get("is_answerable"),
+        "is_answerable": is_answerable,
+        "expected_answerable": expected_answerable,
+        "answerable_correct": (
+            is_answerable == expected_answerable
+            if isinstance(expected_answerable, bool)
+            else None
+        ),
         "reason": response.get("reason"),
         "retrieved_chunks": retrieved_chunks,
         "top_score": top_score,
@@ -95,9 +103,49 @@ def build_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
     total_expected_keywords = sum(len(item["expected_keywords"]) for item in results)
     answerable_count = sum(1 for item in results if item.get("is_answerable"))
 
+    answerable_evaluable = [
+        item for item in results if isinstance(item.get("expected_answerable"), bool)
+    ]
+    answerable_correct = sum(
+        1 for item in answerable_evaluable if item.get("answerable_correct")
+    )
+    expected_answerable_items = [
+        item for item in answerable_evaluable if item["expected_answerable"] is True
+    ]
+    expected_unanswerable_items = [
+        item for item in answerable_evaluable if item["expected_answerable"] is False
+    ]
+    expected_answerable_accepted = sum(
+        1 for item in expected_answerable_items if item.get("is_answerable") is True
+    )
+    expected_unanswerable_rejected = sum(
+        1 for item in expected_unanswerable_items if item.get("is_answerable") is False
+    )
+
     return {
         "total": len(results),
         "answerable_count": answerable_count,
+        "answerable_total": len(answerable_evaluable),
+        "answerable_correct": answerable_correct,
+        "answerable_accuracy": (
+            answerable_correct / len(answerable_evaluable)
+            if answerable_evaluable
+            else 0
+        ),
+        "expected_answerable_total": len(expected_answerable_items),
+        "expected_answerable_accepted": expected_answerable_accepted,
+        "expected_answerable_accept_rate": (
+            expected_answerable_accepted / len(expected_answerable_items)
+            if expected_answerable_items
+            else 0
+        ),
+        "expected_unanswerable_total": len(expected_unanswerable_items),
+        "expected_unanswerable_rejected": expected_unanswerable_rejected,
+        "expected_unanswerable_reject_rate": (
+            expected_unanswerable_rejected / len(expected_unanswerable_items)
+            if expected_unanswerable_items
+            else 0
+        ),
         "source_hits": source_hits,
         "source_evaluable": len(source_evaluable),
         "source_hit_rate": (
@@ -175,6 +223,29 @@ def print_summary_line(prefix: str, summary: dict[str, Any]) -> None:
     print(f"{prefix}_total: {summary['total']}")
     print(f"{prefix}_answerable: {summary['answerable_count']}/{summary['total']}")
     print(
+        f"{prefix}_answerable_correct: "
+        f"{summary['answerable_correct']}/{summary['answerable_total']}"
+    )
+    print(f"{prefix}_answerable_accuracy: {summary['answerable_accuracy']:.2f}")
+    print(
+        f"{prefix}_expected_answerable_accepted: "
+        f"{summary['expected_answerable_accepted']}/"
+        f"{summary['expected_answerable_total']}"
+    )
+    print(
+        f"{prefix}_expected_answerable_accept_rate: "
+        f"{summary['expected_answerable_accept_rate']:.2f}"
+    )
+    print(
+        f"{prefix}_expected_unanswerable_rejected: "
+        f"{summary['expected_unanswerable_rejected']}/"
+        f"{summary['expected_unanswerable_total']}"
+    )
+    print(
+        f"{prefix}_expected_unanswerable_reject_rate: "
+        f"{summary['expected_unanswerable_reject_rate']:.2f}"
+    )
+    print(
         f"{prefix}_source_hits: "
         f"{summary['source_hits']}/{summary['source_evaluable']}"
     )
@@ -197,6 +268,14 @@ def main() -> None:
     for case_type, case_summary in summary["case_types"].items():
         print(f"{case_type}:")
         print_summary_line(case_type, case_summary)
+
+    out_of_corpus = summary["case_types"].get("out_of_corpus")
+    if out_of_corpus:
+        print(
+            "out_of_corpus_rejected: "
+            f"{out_of_corpus['expected_unanswerable_rejected']}/"
+            f"{out_of_corpus['expected_unanswerable_total']}"
+        )
 
     print("case_type_notes:")
     for case_type, notes in summary["case_type_notes"].items():

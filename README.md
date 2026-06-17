@@ -86,7 +86,10 @@ Day 16 起，`/chat` 还会返回 `sources`、`is_answerable` 和 `reason`，用
 
 ```text
 all_total: 11
-all_source_hits: 6/9
+all_answerable: 9/11
+all_answerable_accuracy: 1.00
+all_expected_unanswerable_reject_rate: 1.00
+all_source_hits: 7/9
 in_corpus_total: 9
 out_of_corpus_total: 2
 ```
@@ -96,6 +99,8 @@ out_of_corpus_total: 2
 Day 18 已补充真实 DeepSeek 回答质量小样本人工评审：`eval/llm_answer_review.md`。
 
 Day 19 已将 README、核心 docs 和 eval 文档纳入索引；后续需要基于新索引重新进行一轮 LLM answer review。
+
+Day 20 已在 eval 中加入 `expected_answerable`，并为 `/chat` 增加轻量 out-of-scope 防护，用于降低明显 out-of-corpus 问题被误判为可回答的风险。
 
 ## 当前边界
 
@@ -831,7 +836,9 @@ python scripts\chat_deepseek_demo.py
 
 无检索结果或低相关检索结果时，`/chat` 会返回类似“当前知识库中没有找到足够依据回答该问题”的拒答文本。
 
-当前阈值 `0.2` 是 v0.2 的经验规则，只用于最小可解释 no-answer 策略。后续需要通过更多 eval case、真实业务文档和真实 LLM 输出继续调优。
+当前阈值 `0.2` 是 v0.2 的经验规则，只用于最小可解释 no-answer 策略。Day 20 起，no-answer 不只看检索分数，也会对手机号、联系方式、未来线上用户量等明显超出项目资料范围的问题做轻量 out-of-scope 防护。
+
+这仍不是生产级意图分类器或安全系统，只是为了降低明显 out-of-corpus 问题被误判为可回答的风险。
 
 默认仍然使用 mock LLM client；可选 DeepSeek provider 只用于本地验证真实 LLM 链路，不代表生产级生成质量。
 

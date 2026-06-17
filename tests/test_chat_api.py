@@ -7,12 +7,16 @@ from app.main import app
 client = TestClient(app)
 
 
-def make_chunk(score: float = 0.83) -> dict:
+def make_chunk(
+    score: float = 0.83,
+    content: str = "RAGHub supports TXT and PDF loading.",
+    source: str = "data/raw/sample.txt",
+) -> dict:
     return {
         "chunk_id": "0",
         "score": score,
-        "content": "RAGHub supports TXT and PDF loading.",
-        "source": "data/raw/sample.txt",
+        "content": content,
+        "source": source,
         "file_type": "txt",
         "page": None,
     }
@@ -128,3 +132,55 @@ def test_chat_returns_no_answer_when_score_below_threshold(monkeypatch):
     assert body["sources"] == []
     assert len(body["retrieved_chunks"]) == 1
     assert body["answer"]
+
+
+
+def test_chat_returns_no_answer_for_out_of_project_scope_query(monkeypatch):
+    def fail_get_llm_client():
+        raise AssertionError("LLM client should not be called")
+
+    def fake_retrieve_chunks(query: str, top_k: int = 3):
+        return [make_chunk(score=0.91)]
+
+    monkeypatch.setattr(rag_service, "retrieve_chunks", fake_retrieve_chunks)
+    monkeypatch.setattr(rag_service, "get_llm_client", fail_get_llm_client)
+
+    query = "RAGHub \u4f5c\u8005\u7684\u624b\u673a\u53f7\u662f\u591a\u5c11\uff1f"
+    response = client.post("/chat", json={"query": query, "top_k": 3})
+
+    assert response.status_code == 200
+
+    body = response.json()
+    assert body["is_answerable"] is False
+    assert body["reason"] == "query_out_of_project_scope"
+    assert body["sources"] == []
+    assert len(body["retrieved_chunks"]) == 1
+
+
+def test_chat_keeps_documented_unsupported_feature_answerable(monkeypatch):
+    class FakeLLMClient:
+        def generate(self, prompt: str) -> str:
+            return "RAGHub currently does not support OCR."
+
+    def fake_retrieve_chunks(query: str, top_k: int = 3):
+        return [
+            make_chunk(
+                score=0.91,
+                content="RAGHub \u5f53\u524d\u4e0d\u652f\u6301 OCR \u5904\u7406\u626b\u63cf\u7248 PDF\u3002",
+                source="README.md",
+            )
+        ]
+
+    monkeypatch.setattr(rag_service, "retrieve_chunks", fake_retrieve_chunks)
+    monkeypatch.setattr(rag_service, "get_llm_client", lambda: FakeLLMClient())
+
+    query = "RAGHub \u662f\u5426\u652f\u6301 OCR \u5904\u7406\u626b\u63cf\u7248 PDF\uff1f"
+    response = client.post("/chat", json={"query": query, "top_k": 3})
+
+    assert response.status_code == 200
+
+    body = response.json()
+    assert body["is_answerable"] is True
+    assert body["reason"] == "retrieval_evidence_found"
+    assert body["answer"] == "RAGHub currently does not support OCR."
+    assert body["sources"][0]["source"] == "README.md"

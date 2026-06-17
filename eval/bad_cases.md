@@ -26,6 +26,37 @@
 - next_fix: 基于更多 eval case 调整阈值，并引入 score threshold、rerank 或 answer grounding 检查。
 - interview_explanation: 这个 case 体现了 no-answer 策略的重要性。RAG 系统不能因为检索到了任意片段就强行回答，需要根据证据强度判断是否拒答。
 
+## CASE-005：明显 out-of-corpus 问题被误判为可回答
+
+### 背景
+
+Day 19 扩展 README/docs/eval 索引后，`RAGHub 作者的手机号是多少？` 和 `明天线上用户量是多少？` 这类问题仍能检索到项目相关片段，导致系统层 `is_answerable=true`。
+
+### 表现
+
+- case_type: `out_of_corpus`
+- expected_answerable: `false`
+- 旧表现：`out_of_corpus_answerable: 2/2`
+- 风险：LLM 可能被迫基于相似但无关的项目片段回答。
+
+### 原因
+
+原 no-answer 逻辑主要依赖 top score 阈值。扩展索引后，明显超出项目资料范围的问题仍可能命中 README 或 review 中的相似词。
+
+### 当前处理
+
+Day 20 增加了轻量 out-of-scope 防护，对手机号、联系方式、未来线上用户量等明显不应由项目资料回答的问题返回：
+
+```text
+is_answerable=false
+reason=query_out_of_project_scope
+sources=[]
+```
+
+### 当前边界
+
+这不是生产级意图分类器或安全系统，只是 v0.2 阶段为了降低明显 out-of-corpus 误答风险的工程规则。
+
 ## CASE-003：mock LLM 回答质量有限
 
 - query: RAGHub 当前支持哪些文档处理能力？

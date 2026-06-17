@@ -100,11 +100,14 @@ Day 18 已补充 `eval/llm_answer_review.md`，用于记录真实 DeepSeek provi
 
 Day 19 已将 README、核心 docs 和 eval 文档纳入索引；后续需要基于新索引重新进行一轮 LLM answer review。
 
+Day 20 已在 eval 中加入 `expected_answerable`，并为 `/chat` 增加轻量 out-of-scope 防护。当前目标是降低作者手机号、未来线上用户量等明显 out-of-corpus 问题被误判为可回答的风险。
+
 ## 6. 当前边界
 
 - `/chat` 默认使用 mock LLM client；只有显式配置 `LLM_PROVIDER=deepseek` 和 `DEEPSEEK_API_KEY` 时才调用 DeepSeek。
 - 当前索引已包含 sample TXT/PDF、README、核心 docs 和 eval 文档，但仍是本地文件级别的小规模索引。
 - 多个 docs 同时包含相似风险说明时，source 命中会出现竞争，需要后续通过更细粒度 chunk、rerank 或 eval 调整继续优化。
+- out-of-scope 防护只是 v0.2 的轻量规则，不是生产级意图分类或安全系统。
 - eval 是小样本、规则化、人工辅助判断。
 - 当前已记录 `eval/bad_cases.md`，用于沉淀低相关 query 拒答、mock LLM 质量有限和 source 支撑不足等 bad case。
 - 当前不是生产级 RAG 平台。
