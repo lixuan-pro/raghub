@@ -194,11 +194,11 @@ cosine similarity 衡量向量方向相似度，适合比较归一化后的语�
 
 ### 回答要点
 
-Day 19 后，当前索引来自 sample TXT/PDF、README、核心 docs 和 eval 文档生成的 chunks 与 embeddings。
+Day 22 后，当前索引来自 sample TXT/PDF、README、核心 docs、RAGHub 项目知识库、RAG 工程知识库、eval 文档和自建 demo corpus 生成的 chunks 与 embeddings。
 
 ### 项目中的具体实现
 
-`chunks_preview.jsonl` 保存文本片段和 source，`chunk_embeddings.npy` 保存向量矩阵；当前索引中已包含 README、`docs/raghub_v0_2_scope.md`、`docs/problems_and_solutions.md`、`eval/bad_cases.md` 和 `eval/llm_answer_review.md`。
+`chunks_preview.jsonl` 保存文本片段和 source，`chunk_embeddings.npy` 保存向量矩阵；当前索引规模是 250 chunks，embedding shape 是 `(250, 768)`。
 
 ### 后续可增强
 
@@ -302,7 +302,7 @@ Day 16 增加 `is_answerable` 和 `reason`，无 chunk 或低 score 时拒答。
 
 ### 项目中的具体实现
 
-`scripts/run_eval.py` 读取 `eval/queries.jsonl`，输出 `eval/results.json`。Day 20 增加 `expected_answerable`，用于统计可回答性判断是否符合预期。Day 21B 基于扩展后的 README/docs/eval 索引重新补充 `eval/llm_answer_review.md`，记录真实 DeepSeek 回答质量的小样本人工评审。
+`scripts/run_eval.py` 读取 `eval/queries.jsonl`，输出 `eval/results.json`。Day 20 增加 `expected_answerable`，用于统计可回答性判断是否符合预期。Day 22 将 eval 扩展到 20 条 query，用于覆盖新增的项目知识库、RAG 工程知识库和 demo corpus。Day 21B 的 DeepSeek review 仍是 85 chunks 版本的历史评审。
 
 ### 后续可增强
 
@@ -358,7 +358,7 @@ eval 会检查 retrieved_chunks 中是否包含 expected_source。
 
 ### 项目中的具体实现
 
-当前 eval 已区分 `in_corpus` 和 `out_of_corpus`。README/API 相关问题在 Day 19 后已经进入索引，不再作为 README 未入库的 boundary case；Day 20 重点观察作者手机号、未来线上用户量等真正无知识来源问题是否被拒答。Day 21B 的真实 DeepSeek review 进一步暴露了 source 命中竞争问题，例如 `/retrieve` 字段问题可能命中 `/chat` 响应示例。
+当前 eval 已区分 `in_corpus` 和 `out_of_corpus`。README/API 相关问题在 Day 19 后已经进入索引，不再作为 README 未入库的 boundary case；Day 20 重点观察作者手机号、未来线上用户量等真正无知识来源问题是否被拒答。Day 22 扩展语料后，source_hit_rate 为 0.61、keyword_hit_rate 为 0.70，进一步暴露了 source 命中竞争问题。
 
 ### 后续可增强
 

@@ -108,3 +108,15 @@ reason=retrieval_evidence_found
 ### 面试表达版本
 
 这个 case 说明 RAG 不只是接入真实 LLM 就结束了。即使 sources 来自项目文档，如果 chunk 粒度和 source 选择不够精确，模型也可能把相邻接口的字段混在一起。因此我把它记录为 bad case，后续可以通过更细粒度 chunk、rerank 和 prompt 约束改进。
+
+## CASE-007：Day 22 扩展语料后 source 命中率下降
+
+- query: `RAGHub 如何配置 DeepSeek provider？`、`RAGHub 为什么默认使用 mock LLM provider？`、`知识库更新策略中建议如何维护文档版本？` 等。
+- expected: 命中 README、RAGHub 项目知识库或 demo corpus 中指定的 expected_source。
+- actual: 扩展到 254 chunks 后，部分问题会命中 `eval/llm_answer_review.md`、相邻 policy 文档或相似的 LLM provider 文档，导致 source_hit_rate 从 0.78 左右下降到 0.61。
+- retrieved_chunks: 典型情况是 DeepSeek/provider 类问题命中 LLM review，知识库更新问题命中 `document_owner_policy.md` 或 `change_log_policy.md`。
+- problem_type: source_competition_after_corpus_expansion
+- root_cause: 新增语料中存在大量相似主题，例如 provider、eval、source、知识库更新和安全策略。当前仍使用固定长度 chunk 和内存版向量检索，没有 rerank 或标题感知 chunk，因此容易召回语义相似但不是 expected_source 的片段。
+- current_status: Day 22 保留该现象，不强行包装指标。当前 answerability_judgment_accuracy 仍为 1.00，keyword_hit_rate 为 0.70，但 source_hit_rate 只有 0.61。
+- next_fix: 后续可以调整 Markdown 文档结构、增加标题感知 chunk、引入 rerank 或更细粒度 expected_source / expected_chunk 评估。
+- interview_explanation: 这个 case 说明扩展知识库规模后，RAG 的难点会从“有没有资料”变成“是否命中最直接的资料”。我没有只报好看的指标，而是把 source 竞争记录为 bad case，用它说明后续为什么需要更细粒度切块和 rerank。

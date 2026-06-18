@@ -13,7 +13,7 @@ RAGHub v0.2 是一个面向本地文档的轻量级 RAG 应用后端系统。它
 - chunk 预览文件 `chunks_preview.jsonl`
 - 本地 embedding baseline
 - chunk 向量矩阵 `chunk_embeddings.npy`
-- README、核心 docs 和 eval 文档索引语料
+- README、核心 docs、RAGHub 项目知识库、RAG 工程知识库、eval 文档和自建 demo corpus 索引语料
 - 内存版 cosine similarity top-k 检索
 - `POST /retrieve`
 - `POST /chat`
@@ -98,12 +98,14 @@ Day 19 起，README/API 相关问题已调整为 `in_corpus`；真正缺少知�
 
 Day 21B 已基于 Day 20 / Day 21 后的新索引补充真实 DeepSeek 小样本回答质量人工评审。当前 review 记录了 7 条样本，其中 out-of-corpus 样本能正确拒答，也暴露了 `/retrieve` 字段问题命中 `/chat` 片段导致字段混淆的 bad case。
 
+Day 22 已将索引语料扩展到 254 chunks，并补充 9 条 eval query。当前 source_hit_rate 为 0.61，keyword_hit_rate 为 0.70，说明扩展语料后 source 竞争更加明显，需要继续通过文档结构、chunk 策略和 eval 回归观察。
+
 Day 20 已在 eval 中加入 `expected_answerable`，并为 `/chat` 增加轻量 out-of-scope 防护。当前目标是降低作者手机号、未来线上用户量等明显 out-of-corpus 问题被误判为可回答的风险。
 
 ## 6. 当前边界
 
 - `/chat` 默认使用 mock LLM client；只有显式配置 `LLM_PROVIDER=deepseek` 和 `DEEPSEEK_API_KEY` 时才调用 DeepSeek。
-- 当前索引已包含 sample TXT/PDF、README、核心 docs 和 eval 文档，但仍是本地文件级别的小规模索引。
+- 当前索引已包含 sample TXT/PDF、README、核心 docs、知识库文档、eval 文档和自建 demo corpus，但仍是本地文件级别的小规模索引。
 - 多个 docs 同时包含相似风险说明时，source 命中会出现竞争，需要后续通过更细粒度 chunk、rerank 或 eval 调整继续优化。
 - out-of-scope 防护只是 v0.2 的轻量规则，不是生产级意图分类或安全系统。
 - eval 是小样本、规则化、人工辅助判断。

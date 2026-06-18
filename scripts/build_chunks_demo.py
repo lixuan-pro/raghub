@@ -19,6 +19,11 @@ PROJECT_MARKDOWN_PATHS = [
     ROOT_DIR / "eval/llm_answer_review.md",
 ]
 
+PROJECT_MARKDOWN_GLOBS = [
+    ROOT_DIR / "docs/knowledge_base",
+    ROOT_DIR / "data/demo_corpus",
+]
+
 
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 80
@@ -47,8 +52,18 @@ def document_to_record(document, chunk_id: int) -> dict:
 
 def load_project_markdown_documents() -> list:
     documents = []
+    markdown_paths = list(PROJECT_MARKDOWN_PATHS)
 
-    for path in PROJECT_MARKDOWN_PATHS:
+    for directory in PROJECT_MARKDOWN_GLOBS:
+        if directory.exists():
+            markdown_paths.extend(sorted(directory.rglob("*.md")))
+
+    seen_paths: set[Path] = set()
+    for path in markdown_paths:
+        path = path.resolve()
+        if path in seen_paths:
+            continue
+        seen_paths.add(path)
         if not path.exists():
             raise FileNotFoundError(f"Markdown source not found: {path}")
         documents.extend(load_markdown_documents(path))

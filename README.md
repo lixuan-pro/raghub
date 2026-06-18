@@ -17,6 +17,7 @@ RAGHub 是一个面向本地文档的轻量级 RAG 应用后端系统，用于�
 - 可选 DeepSeek LLM provider
 - 最小 RAG eval
 - 项目问题沉淀与面试材料
+- RAGHub / RAG 工程 / demo corpus 自写索引语料
 
 当前 `/chat` 默认使用 mock LLM client；如本地配置 `LLM_PROVIDER=deepseek` 和 `DEEPSEEK_API_KEY`，可选调用 DeepSeek。当前 eval 是小样本规则化评测，不是工业级自动评测系统。
 
@@ -40,7 +41,7 @@ data/processed/chunks_preview.jsonl
 data/processed/chunk_embeddings.npy
 ```
 
-Day 19 起，索引语料已从 sample TXT/PDF 扩展到 README、核心 docs 和 eval 评审文档；README/API 相关问题不再作为默认 `boundary_case`。
+Day 22 起，当前索引包含项目说明、核心设计文档、RAG 工程知识文档、eval / bad case 文档以及自建 demo corpus。该语料用于验证本地文档 RAG 的离线索引、向量检索、引用返回、拒答和小样本评测流程，不代表生产级知识库规模。
 
 ## 快速运行
 
@@ -85,13 +86,14 @@ Day 16 起，`/chat` 还会返回 `sources`、`is_answerable` 和 `reason`，用
 当前最小 eval 结果：
 
 ```text
-all_total: 11
-all_answerable: 9/11
+all_total: 20
+all_answerable: 18/20
 all_answerability_judgment_accuracy: 1.00
 all_expected_unanswerable_reject_rate: 1.00
-all_source_hits: 7/9
-all_keyword_hit_rate: 0.64
-in_corpus_total: 9
+all_source_hits: 11/18
+all_source_hit_rate: 0.61
+all_keyword_hit_rate: 0.70
+in_corpus_total: 18
 out_of_corpus_total: 2
 ```
 
@@ -100,6 +102,8 @@ out_of_corpus_total: 2
 `out_of_corpus` 用于观察当前知识库之外的问题，例如作者手机号、未来线上用户量等。
 
 Day 21B 已基于 Day 20 / Day 21 后的新索引补充真实 DeepSeek 小样本人工评审：`eval/llm_answer_review.md`。该评审是小样本人工观察，不代表 LLM 准确率或生产级质量证明。
+
+Day 22 已将索引语料扩展到 254 chunks。Day 21B 的 DeepSeek review 仍是 85 chunks 版本的历史结果；如果需要正式评估扩展后索引的真实 LLM 回答质量，应重新跑一轮小样本 review。
 
 Day 20 已在 eval 中加入 `expected_answerable`，并为 `/chat` 增加轻量 out-of-scope 防护，用于降低明显 out-of-corpus 问题被误判为可回答的风险。
 
@@ -506,8 +510,8 @@ eval/llm_answer_review.md
 ```text
 txt documents: 1
 pdf documents: 1
-markdown documents: 5
-chunks: 85
+markdown documents: 49
+chunks: 254
 output: data/processed/chunks_preview.jsonl
 ```
 
@@ -566,8 +570,8 @@ BAAI/bge-base-zh-v1.5
 当前运行结果：
 
 ```text
-chunks: 85
-embedding shape: (85, 768)
+chunks: 254
+embedding shape: (254, 768)
 model: BAAI/bge-base-zh-v1.5
 output: data/processed/chunk_embeddings.npy
 meta: data/processed/chunk_embeddings_meta.json
@@ -849,7 +853,7 @@ python scripts/run_eval.py
 eval/queries.jsonl
 ```
 
-该文件保存最小问题集，每条样例包含：
+该文件保存最小问题集，当前包含 20 条样例。每条样例包含：
 
 - `id`
 - `query`
@@ -887,7 +891,7 @@ eval/results.json
 - eval 包含主评测样例和 `out_of_corpus` 风险样例；后者用于观察 no-answer 策略，不应直接视为普通检索失败。
 - 默认使用 mock LLM client；DeepSeek 仅作为可选 provider，需要本地环境变量配置。
 - eval 会走真实 embedding 检索，首次运行可能因为模型加载或下载而较慢。
-- 当前索引语料已包含 sample TXT/PDF、README、核心 docs 和 eval 文档，但仍是小规模本地索引。
+- 当前索引语料已包含 sample TXT/PDF、README、核心 docs、RAGHub 项目知识库、RAG 工程知识库、eval / bad case 文档和自建 demo corpus，但仍是小规模本地索引。
 - keyword 命中只能作为粗粒度信号，不能代表完整回答质量。
 
 后续增强方向：

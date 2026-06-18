@@ -4,7 +4,9 @@
 
 本轮评审基于 Day 20 / Day 21 后的新索引状态，不是 Day 18 时的旧 7 chunks 索引。
 
-当前索引已包含 sample TXT/PDF、README、核心 docs 和 eval 文档。评审使用真实 DeepSeek provider，通过现有 `/chat` 服务链路完成：
+注意：Day 22 已继续扩展索引语料到 254 chunks，新增 RAGHub 项目知识库、RAG 工程知识库和自建 demo corpus。因此，本轮评审现在应视为 85 chunks 版本的历史结果。GitHub 展示时可以引用其 bad case 价值，但不能把 8.0/10 直接当作 Day 22 后的真实 LLM 质量结论。
+
+本轮评审当时的索引包含 sample TXT/PDF、README、核心 docs 和 eval 文档。评审使用真实 DeepSeek provider，通过现有 `/chat` 服务链路完成：
 
 ```text
 query -> retrieve_chunks -> build_rag_prompt -> DeepSeekLLMClient -> /chat response
@@ -19,7 +21,7 @@ query -> retrieve_chunks -> build_rag_prompt -> DeepSeekLLMClient -> /chat respo
 - 样本类型：`in_corpus`、明确不支持但可回答的能力问题、`out_of_corpus`
 - 检索数据：`data/processed/chunks_preview.jsonl`
 - 向量数据：`data/processed/chunk_embeddings.npy`
-- 当前 chunk 数量：85
+- 当前 chunk 数量：85（Day 21B 历史评审版本；Day 22 后当前索引为 254 chunks）
 
 本轮重点观察：
 
@@ -200,7 +202,9 @@ query -> retrieve_chunks -> build_rag_prompt -> DeepSeekLLMClient -> /chat respo
 
 Day 18 评审基于旧索引，当时 README/docs 尚未进入向量索引，因此 README/API/生产边界类问题容易被标成 boundary case。
 
-当前评审基于 Day 20 / Day 21 后的新索引，README、核心 docs 和 eval 文档已经进入检索链路。GitHub 展示和面试复盘时，应优先引用本轮评审，而不是 Day 18 的旧结论。
+当前评审基于 Day 20 / Day 21 后的新索引，README、核心 docs 和 eval 文档已经进入检索链路。GitHub 展示和面试复盘时，应优先引用本轮评审中记录的风险类型，而不是 Day 18 的旧结论。
+
+Day 22 后，索引已进一步扩展到 RAGHub 项目知识库、RAG 工程知识库和自建 demo corpus。如果需要正式评价 Day 22 后的真实 LLM 回答质量，应重新运行 5-8 条小样本 review。
 
 变化总结：
 
