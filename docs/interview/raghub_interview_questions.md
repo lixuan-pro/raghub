@@ -302,7 +302,7 @@ Day 16 增加 `is_answerable` 和 `reason`，无 chunk 或低 score 时拒答。
 
 ### 项目中的具体实现
 
-`scripts/run_eval.py` 读取 `eval/queries.jsonl`，输出 `eval/results.json`。Day 20 增加 `expected_answerable`，用于统计可回答性判断是否符合预期。Day 22 将 eval 扩展到 20 条 query，用于覆盖新增的项目知识库、RAG 工程知识库和 demo corpus。Day 21B 的 DeepSeek review 仍是 85 chunks 版本的历史评审。
+`scripts/run_eval.py` 读取 `eval/queries.jsonl`，输出 `eval/results.json`。Day 20 增加 `expected_answerable`，用于统计可回答性判断是否符合预期。Day 22 将 eval 扩展到 20 条 query，用于覆盖新增的项目知识库、RAG 工程知识库和 demo corpus。Day 22B 已基于 254 chunks 当前索引，对 20 条 eval query 完成真实 DeepSeek 小样本人工评审；Day 21B 的 85 chunks review 仅作为历史对比。
 
 ### 后续可增强
 

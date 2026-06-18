@@ -120,3 +120,15 @@ reason=retrieval_evidence_found
 - current_status: Day 22 保留该现象，不强行包装指标。当前 answerability_judgment_accuracy 仍为 1.00，keyword_hit_rate 为 0.70，但 source_hit_rate 只有 0.61。
 - next_fix: 后续可以调整 Markdown 文档结构、增加标题感知 chunk、引入 rerank 或更细粒度 expected_source / expected_chunk 评估。
 - interview_explanation: 这个 case 说明扩展知识库规模后，RAG 的难点会从“有没有资料”变成“是否命中最直接的资料”。我没有只报好看的指标，而是把 source 竞争记录为 bad case，用它说明后续为什么需要更细粒度切块和 rerank。
+
+## CASE-008：Day 22B DeepSeek 全量 review 中的 source competition
+
+- query: `RAGHub 项目中遇到过哪些工程问题？`、`RAGHub 当前是否支持 OCR 处理扫描版 PDF？`、`知识库更新策略中建议如何维护文档版本？` 等。
+- expected: 可回答问题应命中对应的项目文档、能力边界文档或 demo corpus policy 文档，并由这些 sources 支撑真实 DeepSeek 回答。
+- actual: Day 22B 对 20 条 eval query 进行真实 DeepSeek 小样本人工评审后，平均人工评分为 8.65/10，out-of-corpus 拒答为 2/2，但 q002、q006、q007、q009、q012、q014、q019 仍被记录为 bad case candidates。
+- retrieved_chunks: 典型情况包括能力边界问题命中旧 `eval/llm_answer_review.md`，工程问题未命中 `docs/problems_and_solutions.md`，知识库更新问题命中相邻的 `document_owner_policy.md` 或 `change_log_policy.md`。
+- problem_type: llm_review_source_competition
+- root_cause: 当前索引包含 README、项目知识库、RAG 工程知识库、eval 文档和 demo corpus，多个文档会使用相似术语，例如 provider、source、eval、policy、知识库更新。内存版向量检索只做 top-k 相似度排序，没有 metadata filter、rerank 或标题感知 chunk，因此真实 LLM 虽然能生成较稳回答，但引用来源不一定是最直接证据。
+- current_status: Day 22B 不把 8.65/10 包装成准确率，而是把 source competition 作为主要风险记录在 `eval/llm_answer_review.md` 和结构化结果 `eval/llm_answer_review_results.json` 中。
+- next_fix: 后续可以将 review / eval 文档与正式知识库文档做检索分层，增加 source_group metadata，或引入 rerank 和 source grounding 检查。
+- interview_explanation: 这个 case 可以说明我没有只看模型回答是否“像是对的”，还会检查 sources 是否真正支撑回答。扩展语料后，RAG 的核心问题从 no-answer 变成 source grounding 和相似文档竞争，这是后续引入 rerank、metadata filter 和标题感知 chunk 的依据。

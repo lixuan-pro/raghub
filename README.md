@@ -101,9 +101,7 @@ out_of_corpus_total: 2
 
 `out_of_corpus` 用于观察当前知识库之外的问题，例如作者手机号、未来线上用户量等。
 
-Day 21B 已基于 Day 20 / Day 21 后的新索引补充真实 DeepSeek 小样本人工评审：`eval/llm_answer_review.md`。该评审是小样本人工观察，不代表 LLM 准确率或生产级质量证明。
-
-Day 22 已将索引语料扩展到 254 chunks。Day 21B 的 DeepSeek review 仍是 85 chunks 版本的历史结果；如果需要正式评估扩展后索引的真实 LLM 回答质量，应重新跑一轮小样本 review。
+Day 22B 已基于 254 chunks 当前索引，对 `eval/queries.jsonl` 中 20 条 query 完成真实 DeepSeek 小样本人工评审：`eval/llm_answer_review.md`。本轮平均人工评分为 8.65/10，out-of-corpus 拒答为 2/2，但 `source_hit_rate` 仍为 0.61，说明扩展语料后 source competition 是主要风险。该评审不代表 LLM 准确率或生产级质量证明。
 
 Day 20 已在 eval 中加入 `expected_answerable`，并为 `/chat` 增加轻量 out-of-scope 防护，用于降低明显 out-of-corpus 问题被误判为可回答的风险。
 
@@ -195,7 +193,7 @@ RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。
 - `eval/queries.jsonl` 最小 RAG eval 样例，包含 `in_corpus` 与 `out_of_corpus`
 - `eval/results.json` eval 运行结果
 - `eval/bad_cases.md` bad case 复盘
-- `eval/llm_answer_review.md` DeepSeek 小样本人工评审历史记录
+- `eval/llm_answer_review.md` DeepSeek 小样本人工评审记录
 - `docs/design/preprocessing_pipeline.md` 文档导入与预处理链路设计说明
 - `docs/design/embedding_baseline_plan.md` embedding baseline 准备说明
 - `docs/weekly_logs/week1.md`

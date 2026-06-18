@@ -96,9 +96,11 @@ eval/results.json
 
 Day 19 起，README/API 相关问题已调整为 `in_corpus`；真正缺少知识来源的问题使用 `out_of_corpus` 标记。
 
-Day 21B 已基于 Day 20 / Day 21 后的新索引补充真实 DeepSeek 小样本回答质量人工评审。当前 review 记录了 7 条样本，其中 out-of-corpus 样本能正确拒答，也暴露了 `/retrieve` 字段问题命中 `/chat` 片段导致字段混淆的 bad case。
+Day 21B 曾基于 85 chunks 索引补充真实 DeepSeek 小样本回答质量人工评审，当前仅作为历史对比。
 
-Day 22 已将索引语料扩展到 254 chunks，并补充 9 条 eval query。当前 source_hit_rate 为 0.61，keyword_hit_rate 为 0.70，说明扩展语料后 source 竞争更加明显，需要继续通过文档结构、chunk 策略和 eval 回归观察。
+Day 22 已将索引语料扩展到 254 chunks，并补充 9 条 eval query。当前 `run_eval.py` 的 source_hit_rate 为 0.61，keyword_hit_rate 为 0.70，说明扩展语料后 source 竞争更加明显，需要继续通过文档结构、chunk 策略和 eval 回归观察。
+
+Day 22B 已基于 254 chunks 当前索引，对 `eval/queries.jsonl` 中 20 条 query 完成真实 DeepSeek 小样本人工评审。当前 review 平均人工评分为 8.65/10，out-of-corpus 拒答为 2/2，同时记录了 `/retrieve` 字段说明、项目工程问题、能力边界问题和知识库 policy 问题中的 source competition 风险。
 
 Day 20 已在 eval 中加入 `expected_answerable`，并为 `/chat` 增加轻量 out-of-scope 防护。当前目标是降低作者手机号、未来线上用户量等明显 out-of-corpus 问题被误判为可回答的风险。
 
