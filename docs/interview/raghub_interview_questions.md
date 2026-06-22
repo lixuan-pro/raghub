@@ -198,7 +198,7 @@ Day 22 后，当前索引来自 sample TXT/PDF、README、核心 docs、RAGHub �
 
 ### 项目中的具体实现
 
-`chunks_preview.jsonl` 保存文本片段和 source，`chunk_embeddings.npy` 保存向量矩阵；当前索引规模是 250 chunks，embedding shape 是 `(250, 768)`。
+`chunks_preview.jsonl` 保存文本片段和 source，`chunk_embeddings.npy` 保存向量矩阵；当前索引规模是 254 chunks，embedding shape 是 `(254, 768)`。
 
 ### 后续可增强
 
@@ -363,6 +363,20 @@ eval 会检查 retrieved_chunks 中是否包含 expected_source。
 ### 后续可增强
 
 建立历史 eval 报告，对比每次改动前后的结果。
+
+## Q：v0.3-lite 为什么做 hybrid retrieval？
+
+### 回答要点
+
+Day 22 扩展到 254 chunks 后，RAGHub 的主要问题不是“没有资料”，而是 source competition：系统能召回语义相关内容，但不一定命中最直接 `expected_source`。v0.3-lite 用 BM25、hybrid fusion、lightweight rerank 和三层 source grounding 指标做对比实验。
+
+### 项目中的具体实现
+
+新增 `BM25Retriever`、`HybridRetriever` 和 `scripts/run_retrieval_eval.py`。eval 从单一 `expected_source` 扩展为 exact / acceptable / source_group 三层指标，并增加 MRR@k 与 Recall@k。当前结果是：vector exact source hit 为 0.61，hybrid exact source hit 仍为 0.61；但 acceptable source hit 从 0.78 提升到 0.83，keyword hit 从 0.72 提升到 0.80。
+
+### 面试表达
+
+我不会把这个包装成“检索显著提升”。更准确的结论是：hybrid 能找到更多合理来源，但没有完全解决最直接 source grounding。后续应该优先做 heading-aware chunk、metadata filter 或检索分层，而不是继续盲目调权重。
 
 ## 工程问题与边界
 

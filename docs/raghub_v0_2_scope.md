@@ -104,17 +104,34 @@ Day 22B 已基于 254 chunks 当前索引，对 `eval/queries.jsonl` 中 20 条 
 
 Day 20 已在 eval 中加入 `expected_answerable`，并为 `/chat` 增加轻量 out-of-scope 防护。当前目标是降低作者手机号、未来线上用户量等明显 out-of-corpus 问题被误判为可回答的风险。
 
-## 6. 当前边界
+## 6. v0.2 frozen 与 v0.3-lite 实验关系
+
+v0.2 frozen 的默认展示链路仍是：
+
+```text
+query
+-> vector_retriever
+-> /retrieve
+-> /chat
+-> mock LLM，可选 DeepSeek
+```
+
+v0.3-lite 在独立分支中增加 BM25、hybrid retrieval、lightweight rerank 和 retrieval-only source grounding 对比实验，用于分析 Day 22 后的 source competition。该实验不改变 `/retrieve` 或 `/chat` 的 response schema，默认检索 provider 仍为 `vector`。
+
+当前 v0.3-lite 结果显示：hybrid 将 acceptable source hit 从 `0.78` 提高到 `0.83`，keyword hit 从 `0.72` 提高到 `0.80`，但 exact source hit 仍为 `0.61`。因此它是检索质量实验，不是新的生产级默认方案。
+
+## 7. 当前边界
 
 - `/chat` 默认使用 mock LLM client；只有显式配置 `LLM_PROVIDER=deepseek` 和 `DEEPSEEK_API_KEY` 时才调用 DeepSeek。
 - 当前索引已包含 sample TXT/PDF、README、核心 docs、知识库文档、eval 文档和自建 demo corpus，但仍是本地文件级别的小规模索引。
 - 多个 docs 同时包含相似风险说明时，source 命中会出现竞争，需要后续通过更细粒度 chunk、rerank 或 eval 调整继续优化。
+- v0.3-lite 的 BM25/hybrid/rerank 是实验能力，默认 `/retrieve` 和 `/chat` 仍保持 v0.2 vector 行为。
 - out-of-scope 防护只是 v0.2 的轻量规则，不是生产级意图分类或安全系统。
 - eval 是小样本、规则化、人工辅助判断。
 - 当前已记录 `eval/bad_cases.md`，用于沉淀低相关 query 拒答、mock LLM 质量有限和 source 支撑不足等 bad case。
 - 当前不是生产级 RAG 平台。
 
-## 7. 合理 Roadmap
+## 8. 合理 Roadmap
 
 - 继续完善 DeepSeek / OpenAI LLM provider
 - 增加 streaming / SSE
@@ -127,7 +144,7 @@ Day 20 已在 eval 中加入 `expected_answerable`，并为 `/chat` 增加轻量
 - 完善真实 LLM provider 的错误处理、超时、日志和质量评估
 - 增加 Docker 部署
 
-## 8. 当前不做清单
+## 9. 当前不做清单
 
 - 不做 Agent
 - 不做工具调用
@@ -138,7 +155,7 @@ Day 20 已在 eval 中加入 `expected_answerable`，并为 `/chat` 增加轻量
 - 不做多租户
 - 不做高并发队列
 
-## 9. 面试表达重点
+## 10. 面试表达重点
 
 这个项目的重点不是“用了很多框架”，而是把 RAG 的每一层拆开实现并验证：
 

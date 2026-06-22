@@ -132,3 +132,14 @@ reason=retrieval_evidence_found
 - current_status: Day 22B 不把 8.65/10 包装成准确率，而是把 source competition 作为主要风险记录在 `eval/llm_answer_review.md` 和结构化结果 `eval/llm_answer_review_results.json` 中。
 - next_fix: 后续可以将 review / eval 文档与正式知识库文档做检索分层，增加 source_group metadata，或引入 rerank 和 source grounding 检查。
 - interview_explanation: 这个 case 可以说明我没有只看模型回答是否“像是对的”，还会检查 sources 是否真正支撑回答。扩展语料后，RAG 的核心问题从 no-answer 变成 source grounding 和相似文档竞争，这是后续引入 rerank、metadata filter 和标题感知 chunk 的依据。
+
+## CASE-009：v0.3-lite hybrid 未提升 exact source hit
+
+- query: `RAGHub 当前是否支持 OCR 处理扫描版 PDF？`、`RAGHub 当前是否已经接入 Qdrant 或 Milvus？`、`RAGHub 为什么当前没有接入 Qdrant 或 Milvus？`、`知识库更新策略中建议如何维护文档版本？` 等。
+- expected: hybrid retrieval 能提高合理来源覆盖，同时不牺牲 v0.2 frozen 的默认 vector 行为。
+- actual: `scripts/run_retrieval_eval.py` 显示 vector exact source hit 为 `0.61`，hybrid 和 hybrid_rerank exact source hit 仍为 `0.61`。hybrid 的 acceptable source hit 从 `0.78` 提高到 `0.83`，keyword hit 从 `0.72` 提高到 `0.80`，但未解决最直接 source grounding。
+- problem_type: hybrid_ablation_exact_source_not_improved
+- root_cause: 当前失败不只是 score fusion 问题。OCR、Qdrant/Milvus、provider、知识库更新等主题在 README、scope、eval review、demo policy 文档中高度相似，固定长度 chunk 和普通 source path 加分无法稳定区分最直接来源。
+- current_status: v0.3-lite 保留 hybrid 作为实验能力，不设为默认 `RETRIEVER_PROVIDER`。默认 `/retrieve` 和 `/chat` 仍走 vector，避免 hybrid final_score 改变 no-answer 阈值语义。
+- next_fix: 优先考虑 heading-aware Markdown chunk、metadata filter、eval/review 文档检索分层，或将 source_group metadata 写入索引；不要继续为当前 20 条 query 写硬编码规则。
+- interview_explanation: 这个 case 说明我不是只追求局部指标变好。hybrid 提升了合理来源覆盖，但没有提升 exact source hit，所以我把它记录为 ablation 结果，并明确不把实验能力升级为默认方案。

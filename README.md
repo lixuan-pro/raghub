@@ -50,6 +50,7 @@ cd E:\Code\Py\raghub
 .\.venv\Scripts\Activate.ps1
 python -m pytest
 python scripts\run_eval.py
+python scripts\run_retrieval_eval.py
 ```
 
 启动 FastAPI：
@@ -105,6 +106,17 @@ Day 22B 已基于 254 chunks 当前索引，对 `eval/queries.jsonl` 中 20 条 
 
 Day 20 已在 eval 中加入 `expected_answerable`，并为 `/chat` 增加轻量 out-of-scope 防护，用于降低明显 out-of-corpus 问题被误判为可回答的风险。
 
+v0.3-lite 新增 retrieval-only 对比实验，不调用 LLM，不覆盖 `eval/results.json`，输出到 `eval/retrieval_comparison.json`。当前结果如下：
+
+| mode | exact_source_hit_rate | acceptable_source_hit_rate | source_group_hit_rate | keyword_hit_rate | MRR@k | Recall@k |
+| ---- | --------------------: | -------------------------: | --------------------: | ---------------: | ----: | -------: |
+| vector | 0.61 | 0.78 | 0.61 | 0.72 | 0.69 | 0.78 |
+| bm25 | 0.44 | 0.61 | 0.50 | 0.77 | 0.48 | 0.61 |
+| hybrid | 0.61 | 0.83 | 0.61 | 0.80 | 0.63 | 0.83 |
+| hybrid_rerank | 0.61 | 0.83 | 0.61 | 0.80 | 0.63 | 0.83 |
+
+结论：hybrid 提高了 acceptable source hit 和 keyword hit，但没有提高 exact source hit，因此当前不建议设为默认检索模式。完整实验记录见 `docs/retrieval_quality_optimization.md`。
+
 ## 当前边界
 
 RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。
@@ -115,8 +127,7 @@ RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。
 - streaming / SSE
 - Agent 或工具调用
 - Qdrant / Milvus / pgvector
-- BM25 / hybrid retrieval
-- rerank
+- 默认链路不启用 BM25 / hybrid retrieval / rerank；这些能力仅作为 v0.3-lite 实验模式保留
 - Docker 部署
 - 多租户、权限和生产级并发能力
 
@@ -150,7 +161,7 @@ RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。
 → eval / bad cases / LLM answer review
 ```
 
-当前仍使用内存版向量检索，尚未接入 Qdrant / Milvus / pgvector，也没有实现 BM25、hybrid retrieval 或 rerank。
+当前默认链路仍使用内存版向量检索，尚未接入 Qdrant / Milvus / pgvector。v0.3-lite 分支中新增了 BM25、hybrid retrieval 和 lightweight rerank 的 retrieval-only 对比实验，但默认 `/retrieve` 和 `/chat` 仍保持 vector 行为。
 
 ---
 
@@ -188,7 +199,10 @@ RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。
 - `data/processed/chunk_embeddings.npy` chunk 向量矩阵
 - `data/processed/chunk_embeddings_meta.json` embedding 元信息文件
 - `app/retrievers/vector_retriever.py` 内存版向量相似度检索模块
+- `app/retrievers/bm25_retriever.py` v0.3-lite 轻量 BM25 检索实验模块
+- `app/retrievers/hybrid_retriever.py` v0.3-lite hybrid fusion 与 lightweight rerank 实验模块
 - `scripts/retrieve_demo.py` 最小检索 demo 脚本
+- `scripts/run_retrieval_eval.py` v0.3-lite retrieval-only 对比实验脚本
 - `tests/test_vector_retriever.py` 向量相似度测试
 - `eval/queries.jsonl` 最小 RAG eval 样例，包含 `in_corpus` 与 `out_of_corpus`
 - `eval/results.json` eval 运行结果
@@ -857,6 +871,8 @@ eval/queries.jsonl
 - `query`
 - `expected_keywords`
 - `expected_source`
+- `expected_sources`
+- `expected_source_group`
 - `case_type`
 - `note`
 - `expected_answerable`
@@ -875,6 +891,11 @@ eval/results.json
 - `matched_keywords`
 - `keyword_hit_count`
 - `source_hit`
+- `exact_source_hit`
+- `acceptable_source_hit`
+- `source_group_hit`
+- `mrr_at_k`
+- `recall_at_k`
 - `is_answerable`
 - `expected_answerable`
 - `answerable_correct`
@@ -949,7 +970,7 @@ python -m pytest
 当前测试结果：
 
 ```text
-34 passed
+44 passed
 ```
 
 ---
@@ -1010,8 +1031,7 @@ python -m pytest
 - 多租户权限
 - 高并发任务队列
 - 完整向量数据库
-- BM25 / hybrid retrieval
-- rerank
+- 默认检索链路不启用 BM25 / hybrid retrieval / rerank
 - 生产级真实 LLM RAG 问答接口
 - 前端页面
 - Docker 部署
