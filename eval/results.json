@@ -15,6 +15,17 @@
       "source_hits": 11,
       "source_evaluable": 18,
       "source_hit_rate": 0.6111111111111112,
+      "exact_source_hits": 11,
+      "exact_source_evaluable": 18,
+      "exact_source_hit_rate": 0.6111111111111112,
+      "acceptable_source_hits": 14,
+      "acceptable_source_evaluable": 18,
+      "acceptable_source_hit_rate": 0.7777777777777778,
+      "source_group_hits": 11,
+      "source_group_evaluable": 18,
+      "source_group_hit_rate": 0.6111111111111112,
+      "mrr_at_k": 0.6944444444444444,
+      "recall_at_k": 0.7777777777777778,
       "keyword_hits": 64,
       "expected_keywords": 92,
       "keyword_hit_rate": 0.6956521739130435
@@ -35,6 +46,17 @@
         "source_hits": 11,
         "source_evaluable": 18,
         "source_hit_rate": 0.6111111111111112,
+        "exact_source_hits": 11,
+        "exact_source_evaluable": 18,
+        "exact_source_hit_rate": 0.6111111111111112,
+        "acceptable_source_hits": 14,
+        "acceptable_source_evaluable": 18,
+        "acceptable_source_hit_rate": 0.7777777777777778,
+        "source_group_hits": 11,
+        "source_group_evaluable": 18,
+        "source_group_hit_rate": 0.6111111111111112,
+        "mrr_at_k": 0.6944444444444444,
+        "recall_at_k": 0.7777777777777778,
         "keyword_hits": 62,
         "expected_keywords": 86,
         "keyword_hit_rate": 0.7209302325581395
@@ -54,6 +76,17 @@
         "source_hits": 0,
         "source_evaluable": 0,
         "source_hit_rate": 0,
+        "exact_source_hits": 0,
+        "exact_source_evaluable": 0,
+        "exact_source_hit_rate": 0,
+        "acceptable_source_hits": 0,
+        "acceptable_source_evaluable": 0,
+        "acceptable_source_hit_rate": 0,
+        "source_group_hits": 0,
+        "source_group_evaluable": 0,
+        "source_group_hit_rate": 0,
+        "mrr_at_k": 0,
+        "recall_at_k": 0,
         "keyword_hits": 2,
         "expected_keywords": 6,
         "keyword_hit_rate": 0.3333333333333333
@@ -136,8 +169,22 @@
       ],
       "keyword_hit_count": 2,
       "expected_source": "README.md",
+      "expected_sources": [
+        "README.md",
+        "docs/knowledge_base/raghub/retrieve_api_design.md",
+        "docs/knowledge_base/raghub/chat_api_design.md"
+      ],
+      "expected_source_group": "raghub_api_docs",
       "source_hit": true,
-      "source_evaluable": true
+      "source_evaluable": true,
+      "exact_source_hit": true,
+      "acceptable_source_hit": true,
+      "acceptable_source_evaluable": true,
+      "source_group_hit": false,
+      "source_group_evaluable": true,
+      "source_hit_rank": 1,
+      "mrr_at_k": 1.0,
+      "recall_at_k": 1
     },
     {
       "id": "q002",
@@ -192,8 +239,21 @@
       ],
       "keyword_hit_count": 4,
       "expected_source": "README.md",
+      "expected_sources": [
+        "README.md",
+        "docs/knowledge_base/raghub/retrieve_api_design.md"
+      ],
+      "expected_source_group": "raghub_api_docs",
       "source_hit": false,
-      "source_evaluable": true
+      "source_evaluable": true,
+      "exact_source_hit": false,
+      "acceptable_source_hit": true,
+      "acceptable_source_evaluable": true,
+      "source_group_hit": true,
+      "source_group_evaluable": true,
+      "source_hit_rank": 1,
+      "mrr_at_k": 1.0,
+      "recall_at_k": 1
     },
     {
       "id": "q003",
@@ -245,8 +305,23 @@
       ],
       "keyword_hit_count": 3,
       "expected_source": "README.md",
+      "expected_sources": [
+        "README.md",
+        "docs/knowledge_base/raghub/chat_api_design.md",
+        "docs/knowledge_base/raghub/source_citation_design.md",
+        "docs/knowledge_base/raghub/no_answer_strategy.md"
+      ],
+      "expected_source_group": "raghub_api_docs",
       "source_hit": true,
-      "source_evaluable": true
+      "source_evaluable": true,
+      "exact_source_hit": true,
+      "acceptable_source_hit": true,
+      "acceptable_source_evaluable": true,
+      "source_group_hit": false,
+      "source_group_evaluable": true,
+      "source_hit_rank": 2,
+      "mrr_at_k": 0.5,
+      "recall_at_k": 1
     },
     {
       "id": "q004",
@@ -299,8 +374,22 @@
       ],
       "keyword_hit_count": 4,
       "expected_source": "README.md",
+      "expected_sources": [
+        "README.md",
+        "docs/knowledge_base/raghub/mock_vs_deepseek.md",
+        "docs/knowledge_base/raghub/llm_provider_design.md"
+      ],
+      "expected_source_group": "raghub_llm_provider",
       "source_hit": true,
-      "source_evaluable": true
+      "source_evaluable": true,
+      "exact_source_hit": true,
+      "acceptable_source_hit": true,
+      "acceptable_source_evaluable": true,
+      "source_group_hit": false,
+      "source_group_evaluable": true,
+      "source_hit_rank": 1,
+      "mrr_at_k": 1.0,
+      "recall_at_k": 1
     },
     {
       "id": "q005",
@@ -348,8 +437,22 @@
       ],
       "keyword_hit_count": 0,
       "expected_source": "README.md",
+      "expected_sources": [
+        "README.md",
+        "docs/raghub_v0_2_scope.md",
+        "docs/knowledge_base/raghub/project_scope_and_boundaries.md"
+      ],
+      "expected_source_group": "raghub_scope_boundary",
       "source_hit": true,
-      "source_evaluable": true
+      "source_evaluable": true,
+      "exact_source_hit": true,
+      "acceptable_source_hit": true,
+      "acceptable_source_evaluable": true,
+      "source_group_hit": true,
+      "source_group_evaluable": true,
+      "source_hit_rank": 1,
+      "mrr_at_k": 1.0,
+      "recall_at_k": 1
     },
     {
       "id": "q006",
@@ -401,8 +504,22 @@
       ],
       "keyword_hit_count": 3,
       "expected_source": "README.md",
+      "expected_sources": [
+        "README.md",
+        "docs/raghub_v0_2_scope.md",
+        "docs/knowledge_base/raghub/project_scope_and_boundaries.md"
+      ],
+      "expected_source_group": "raghub_scope_boundary",
       "source_hit": false,
-      "source_evaluable": true
+      "source_evaluable": true,
+      "exact_source_hit": false,
+      "acceptable_source_hit": false,
+      "acceptable_source_evaluable": true,
+      "source_group_hit": false,
+      "source_group_evaluable": true,
+      "source_hit_rank": null,
+      "mrr_at_k": 0.0,
+      "recall_at_k": 0
     },
     {
       "id": "q007",
@@ -455,8 +572,23 @@
       ],
       "keyword_hit_count": 3,
       "expected_source": "README.md",
+      "expected_sources": [
+        "README.md",
+        "docs/raghub_v0_2_scope.md",
+        "docs/knowledge_base/raghub/project_scope_and_boundaries.md",
+        "docs/knowledge_base/raghub/future_roadmap.md"
+      ],
+      "expected_source_group": "raghub_scope_boundary",
       "source_hit": false,
-      "source_evaluable": true
+      "source_evaluable": true,
+      "exact_source_hit": false,
+      "acceptable_source_hit": false,
+      "acceptable_source_evaluable": true,
+      "source_group_hit": false,
+      "source_group_evaluable": true,
+      "source_hit_rank": null,
+      "mrr_at_k": 0.0,
+      "recall_at_k": 0
     },
     {
       "id": "q008",
@@ -510,8 +642,21 @@
       ],
       "keyword_hit_count": 4,
       "expected_source": "eval/llm_answer_review.md",
+      "expected_sources": [
+        "eval/llm_answer_review.md",
+        "eval/bad_cases.md"
+      ],
+      "expected_source_group": "raghub_eval",
       "source_hit": true,
-      "source_evaluable": true
+      "source_evaluable": true,
+      "exact_source_hit": true,
+      "acceptable_source_hit": true,
+      "acceptable_source_evaluable": true,
+      "source_group_hit": true,
+      "source_group_evaluable": true,
+      "source_hit_rank": 1,
+      "mrr_at_k": 1.0,
+      "recall_at_k": 1
     },
     {
       "id": "q009",
@@ -562,8 +707,20 @@
       ],
       "keyword_hit_count": 1,
       "expected_source": "docs/problems_and_solutions.md",
+      "expected_sources": [
+        "docs/problems_and_solutions.md"
+      ],
+      "expected_source_group": "raghub_project_issues",
       "source_hit": false,
-      "source_evaluable": true
+      "source_evaluable": true,
+      "exact_source_hit": false,
+      "acceptable_source_hit": false,
+      "acceptable_source_evaluable": true,
+      "source_group_hit": false,
+      "source_group_evaluable": true,
+      "source_hit_rank": null,
+      "mrr_at_k": 0.0,
+      "recall_at_k": 0
     },
     {
       "id": "q010",
@@ -612,8 +769,18 @@
       ],
       "keyword_hit_count": 1,
       "expected_source": null,
+      "expected_sources": [],
+      "expected_source_group": null,
       "source_hit": false,
-      "source_evaluable": false
+      "source_evaluable": false,
+      "exact_source_hit": false,
+      "acceptable_source_hit": false,
+      "acceptable_source_evaluable": false,
+      "source_group_hit": false,
+      "source_group_evaluable": false,
+      "source_hit_rank": null,
+      "mrr_at_k": 0.0,
+      "recall_at_k": 0
     },
     {
       "id": "q011",
@@ -662,8 +829,18 @@
       ],
       "keyword_hit_count": 1,
       "expected_source": null,
+      "expected_sources": [],
+      "expected_source_group": null,
       "source_hit": false,
-      "source_evaluable": false
+      "source_evaluable": false,
+      "exact_source_hit": false,
+      "acceptable_source_hit": false,
+      "acceptable_source_evaluable": false,
+      "source_group_hit": false,
+      "source_group_evaluable": false,
+      "source_hit_rank": null,
+      "mrr_at_k": 0.0,
+      "recall_at_k": 0
     },
     {
       "id": "q012",
@@ -716,8 +893,22 @@
       ],
       "keyword_hit_count": 3,
       "expected_source": "docs/knowledge_base/raghub/mock_vs_deepseek.md",
+      "expected_sources": [
+        "docs/knowledge_base/raghub/mock_vs_deepseek.md",
+        "docs/knowledge_base/raghub/llm_provider_design.md",
+        "README.md"
+      ],
+      "expected_source_group": "raghub_llm_provider",
       "source_hit": false,
-      "source_evaluable": true
+      "source_evaluable": true,
+      "exact_source_hit": false,
+      "acceptable_source_hit": true,
+      "acceptable_source_evaluable": true,
+      "source_group_hit": true,
+      "source_group_evaluable": true,
+      "source_hit_rank": 2,
+      "mrr_at_k": 0.5,
+      "recall_at_k": 1
     },
     {
       "id": "q013",
@@ -772,8 +963,22 @@
       ],
       "keyword_hit_count": 5,
       "expected_source": "docs/knowledge_base/raghub/no_answer_strategy.md",
+      "expected_sources": [
+        "docs/knowledge_base/raghub/no_answer_strategy.md",
+        "README.md",
+        "docs/raghub_v0_2_scope.md"
+      ],
+      "expected_source_group": "raghub_no_answer",
       "source_hit": true,
-      "source_evaluable": true
+      "source_evaluable": true,
+      "exact_source_hit": true,
+      "acceptable_source_hit": true,
+      "acceptable_source_evaluable": true,
+      "source_group_hit": true,
+      "source_group_evaluable": true,
+      "source_hit_rank": 1,
+      "mrr_at_k": 1.0,
+      "recall_at_k": 1
     },
     {
       "id": "q014",
@@ -826,8 +1031,23 @@
       ],
       "keyword_hit_count": 3,
       "expected_source": "docs/knowledge_base/raghub/project_scope_and_boundaries.md",
+      "expected_sources": [
+        "docs/knowledge_base/raghub/project_scope_and_boundaries.md",
+        "README.md",
+        "docs/raghub_v0_2_scope.md",
+        "docs/knowledge_base/raghub/future_roadmap.md"
+      ],
+      "expected_source_group": "raghub_scope_boundary",
       "source_hit": false,
-      "source_evaluable": true
+      "source_evaluable": true,
+      "exact_source_hit": false,
+      "acceptable_source_hit": false,
+      "acceptable_source_evaluable": true,
+      "source_group_hit": false,
+      "source_group_evaluable": true,
+      "source_hit_rank": null,
+      "mrr_at_k": 0.0,
+      "recall_at_k": 0
     },
     {
       "id": "q015",
@@ -882,8 +1102,22 @@
       ],
       "keyword_hit_count": 5,
       "expected_source": "docs/knowledge_base/rag_engineering/chunk_size_and_overlap_tradeoff.md",
+      "expected_sources": [
+        "docs/knowledge_base/rag_engineering/chunk_size_and_overlap_tradeoff.md",
+        "docs/knowledge_base/rag_engineering/why_chunking_matters.md",
+        "docs/knowledge_base/raghub/chunking_strategy.md"
+      ],
+      "expected_source_group": "rag_engineering_chunking",
       "source_hit": true,
-      "source_evaluable": true
+      "source_evaluable": true,
+      "exact_source_hit": true,
+      "acceptable_source_hit": true,
+      "acceptable_source_evaluable": true,
+      "source_group_hit": true,
+      "source_group_evaluable": true,
+      "source_hit_rank": 1,
+      "mrr_at_k": 1.0,
+      "recall_at_k": 1
     },
     {
       "id": "q016",
@@ -937,8 +1171,22 @@
       ],
       "keyword_hit_count": 4,
       "expected_source": "docs/knowledge_base/raghub/bad_case_analysis.md",
+      "expected_sources": [
+        "docs/knowledge_base/raghub/bad_case_analysis.md",
+        "eval/bad_cases.md",
+        "docs/knowledge_base/rag_engineering/retrieval_failure_taxonomy.md"
+      ],
+      "expected_source_group": "rag_engineering_eval",
       "source_hit": true,
-      "source_evaluable": true
+      "source_evaluable": true,
+      "exact_source_hit": true,
+      "acceptable_source_hit": true,
+      "acceptable_source_evaluable": true,
+      "source_group_hit": true,
+      "source_group_evaluable": true,
+      "source_hit_rank": 1,
+      "mrr_at_k": 1.0,
+      "recall_at_k": 1
     },
     {
       "id": "q017",
@@ -993,8 +1241,22 @@
       ],
       "keyword_hit_count": 5,
       "expected_source": "docs/knowledge_base/rag_engineering/vector_search_limitations.md",
+      "expected_sources": [
+        "docs/knowledge_base/rag_engineering/vector_search_limitations.md",
+        "docs/knowledge_base/raghub/vector_retrieval_design.md",
+        "docs/knowledge_base/raghub/source_competition_notes.md"
+      ],
+      "expected_source_group": "rag_engineering_retrieval",
       "source_hit": true,
-      "source_evaluable": true
+      "source_evaluable": true,
+      "exact_source_hit": true,
+      "acceptable_source_hit": true,
+      "acceptable_source_evaluable": true,
+      "source_group_hit": true,
+      "source_group_evaluable": true,
+      "source_hit_rank": 1,
+      "mrr_at_k": 1.0,
+      "recall_at_k": 1
     },
     {
       "id": "q018",
@@ -1049,8 +1311,20 @@
       ],
       "keyword_hit_count": 5,
       "expected_source": "data/demo_corpus/ai_project_handbook/security_and_api_key_policy.md",
+      "expected_sources": [
+        "data/demo_corpus/ai_project_handbook/security_and_api_key_policy.md"
+      ],
+      "expected_source_group": "demo_security_policy",
       "source_hit": true,
-      "source_evaluable": true
+      "source_evaluable": true,
+      "exact_source_hit": true,
+      "acceptable_source_hit": true,
+      "acceptable_source_evaluable": true,
+      "source_group_hit": true,
+      "source_group_evaluable": true,
+      "source_hit_rank": 1,
+      "mrr_at_k": 1.0,
+      "recall_at_k": 1
     },
     {
       "id": "q019",
@@ -1103,8 +1377,21 @@
       ],
       "keyword_hit_count": 3,
       "expected_source": "data/demo_corpus/ai_project_handbook/knowledge_base_update_policy.md",
+      "expected_sources": [
+        "data/demo_corpus/ai_project_handbook/knowledge_base_update_policy.md",
+        "data/demo_corpus/ai_project_handbook/change_log_policy.md"
+      ],
+      "expected_source_group": "demo_knowledge_update_policy",
       "source_hit": false,
-      "source_evaluable": true
+      "source_evaluable": true,
+      "exact_source_hit": false,
+      "acceptable_source_hit": true,
+      "acceptable_source_evaluable": true,
+      "source_group_hit": true,
+      "source_group_evaluable": true,
+      "source_hit_rank": 2,
+      "mrr_at_k": 0.5,
+      "recall_at_k": 1
     },
     {
       "id": "q020",
@@ -1159,8 +1446,20 @@
       ],
       "keyword_hit_count": 5,
       "expected_source": "data/demo_corpus/ai_project_handbook/llm_provider_policy.md",
+      "expected_sources": [
+        "data/demo_corpus/ai_project_handbook/llm_provider_policy.md"
+      ],
+      "expected_source_group": "demo_llm_provider_policy",
       "source_hit": true,
-      "source_evaluable": true
+      "source_evaluable": true,
+      "exact_source_hit": true,
+      "acceptable_source_hit": true,
+      "acceptable_source_evaluable": true,
+      "source_group_hit": true,
+      "source_group_evaluable": true,
+      "source_hit_rank": 1,
+      "mrr_at_k": 1.0,
+      "recall_at_k": 1
     }
   ]
 }

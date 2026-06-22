@@ -56,18 +56,109 @@ def is_source_hit(
     )
 
 
-def evaluate_query(item: dict[str, Any], top_k: int = 3) -> dict[str, Any]:
+def get_expected_sources(item: dict[str, Any]) -> list[str]:
+    expected_sources = item.get("expected_sources")
+    if isinstance(expected_sources, list):
+        return [
+            source
+            for source in expected_sources
+            if isinstance(source, str) and source
+        ]
+
+    expected_source = item.get("expected_source")
+    if isinstance(expected_source, str) and expected_source:
+        return [expected_source]
+
+    return []
+
+
+def build_source_group_lookup(
+    queries: list[dict[str, Any]],
+) -> dict[str, str]:
+    lookup: dict[str, str] = {}
+
+    for item in queries:
+        expected_source_group = item.get("expected_source_group")
+        if not expected_source_group:
+            continue
+
+        for source in get_expected_sources(item):
+            lookup[source] = expected_source_group
+
+    return lookup
+
+
+def is_acceptable_source_hit(
+    expected_sources: list[str],
+    retrieved_chunks: list[dict[str, Any]],
+) -> bool:
+    if not expected_sources:
+        return False
+
+    expected_source_set = set(expected_sources)
+    return any(
+        chunk.get("source") in expected_source_set
+        for chunk in retrieved_chunks
+    )
+
+
+def is_source_group_hit(
+    expected_source_group: str | None,
+    retrieved_chunks: list[dict[str, Any]],
+    source_group_lookup: dict[str, str],
+) -> bool:
+    if not expected_source_group:
+        return False
+
+    return any(
+        source_group_lookup.get(str(chunk.get("source") or ""))
+        == expected_source_group
+        for chunk in retrieved_chunks
+    )
+
+
+def first_source_hit_rank(
+    expected_sources: list[str],
+    retrieved_chunks: list[dict[str, Any]],
+) -> int | None:
+    if not expected_sources:
+        return None
+
+    expected_source_set = set(expected_sources)
+    for index, chunk in enumerate(retrieved_chunks, start=1):
+        if chunk.get("source") in expected_source_set:
+            return index
+
+    return None
+
+
+def reciprocal_rank(rank: int | None) -> float:
+    return 1 / rank if rank else 0.0
+
+
+def evaluate_query(
+    item: dict[str, Any],
+    top_k: int = 3,
+    source_group_lookup: dict[str, str] | None = None,
+) -> dict[str, Any]:
     response = generate_chat_response(query=item["query"], top_k=top_k)
     retrieved_chunks = response["retrieved_chunks"]
     expected_keywords = item.get("expected_keywords", [])
     expected_source = item.get("expected_source")
+    expected_sources = get_expected_sources(item)
+    expected_source_group = item.get("expected_source_group")
     expected_answerable = item.get("expected_answerable")
     is_answerable = bool(response.get("is_answerable"))
+    source_group_lookup = source_group_lookup or build_source_group_lookup([item])
 
     top_score = retrieved_chunks[0]["score"] if retrieved_chunks else None
     matched_keywords = match_keywords(
         expected_keywords=expected_keywords,
         answer=response["answer"],
+        retrieved_chunks=retrieved_chunks,
+    )
+    source_hit_rank = first_source_hit_rank(
+        expected_sources=expected_sources,
         retrieved_chunks=retrieved_chunks,
     )
 
@@ -91,14 +182,51 @@ def evaluate_query(item: dict[str, Any], top_k: int = 3) -> dict[str, Any]:
         "expected_keywords": expected_keywords,
         "keyword_hit_count": len(matched_keywords),
         "expected_source": expected_source,
+        "expected_sources": expected_sources,
+        "expected_source_group": expected_source_group,
         "source_hit": is_source_hit(expected_source, retrieved_chunks),
         "source_evaluable": bool(expected_source),
+        "exact_source_hit": is_source_hit(expected_source, retrieved_chunks),
+        "acceptable_source_hit": is_acceptable_source_hit(
+            expected_sources=expected_sources,
+            retrieved_chunks=retrieved_chunks,
+        ),
+        "acceptable_source_evaluable": bool(expected_sources),
+        "source_group_hit": is_source_group_hit(
+            expected_source_group=expected_source_group,
+            retrieved_chunks=retrieved_chunks,
+            source_group_lookup=source_group_lookup,
+        ),
+        "source_group_evaluable": bool(expected_source_group),
+        "source_hit_rank": source_hit_rank,
+        "mrr_at_k": reciprocal_rank(source_hit_rank),
+        "recall_at_k": 1 if source_hit_rank else 0,
     }
 
 
 def build_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
     source_evaluable = [item for item in results if item.get("source_evaluable")]
     source_hits = sum(1 for item in source_evaluable if item["source_hit"])
+    acceptable_source_evaluable = [
+        item for item in results if item.get("acceptable_source_evaluable")
+    ]
+    acceptable_source_hits = sum(
+        1 for item in acceptable_source_evaluable if item["acceptable_source_hit"]
+    )
+    source_group_evaluable = [
+        item for item in results if item.get("source_group_evaluable")
+    ]
+    source_group_hits = sum(
+        1 for item in source_group_evaluable if item["source_group_hit"]
+    )
+    total_mrr_at_k = sum(
+        float(item.get("mrr_at_k") or 0)
+        for item in acceptable_source_evaluable
+    )
+    total_recall_at_k = sum(
+        float(item.get("recall_at_k") or 0)
+        for item in acceptable_source_evaluable
+    )
     total_keyword_hits = sum(item["keyword_hit_count"] for item in results)
     total_expected_keywords = sum(len(item["expected_keywords"]) for item in results)
     answerable_count = sum(1 for item in results if item.get("is_answerable"))
@@ -153,6 +281,37 @@ def build_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
             if source_evaluable
             else 0
         ),
+        "exact_source_hits": source_hits,
+        "exact_source_evaluable": len(source_evaluable),
+        "exact_source_hit_rate": (
+            source_hits / len(source_evaluable)
+            if source_evaluable
+            else 0
+        ),
+        "acceptable_source_hits": acceptable_source_hits,
+        "acceptable_source_evaluable": len(acceptable_source_evaluable),
+        "acceptable_source_hit_rate": (
+            acceptable_source_hits / len(acceptable_source_evaluable)
+            if acceptable_source_evaluable
+            else 0
+        ),
+        "source_group_hits": source_group_hits,
+        "source_group_evaluable": len(source_group_evaluable),
+        "source_group_hit_rate": (
+            source_group_hits / len(source_group_evaluable)
+            if source_group_evaluable
+            else 0
+        ),
+        "mrr_at_k": (
+            total_mrr_at_k / len(acceptable_source_evaluable)
+            if acceptable_source_evaluable
+            else 0
+        ),
+        "recall_at_k": (
+            total_recall_at_k / len(acceptable_source_evaluable)
+            if acceptable_source_evaluable
+            else 0
+        ),
         "keyword_hits": total_keyword_hits,
         "expected_keywords": total_expected_keywords,
         "keyword_hit_rate": (
@@ -193,7 +352,14 @@ def collect_case_notes(results: list[dict[str, Any]]) -> dict[str, list[str]]:
 
 def run_eval() -> dict[str, Any]:
     queries = load_eval_queries()
-    results = [evaluate_query(item) for item in queries]
+    source_group_lookup = build_source_group_lookup(queries)
+    results = [
+        evaluate_query(
+            item,
+            source_group_lookup=source_group_lookup,
+        )
+        for item in queries
+    ]
     grouped_results = group_results_by_case_type(results)
 
     case_type_summaries = {
@@ -250,6 +416,26 @@ def print_summary_line(prefix: str, summary: dict[str, Any]) -> None:
         f"{summary['source_hits']}/{summary['source_evaluable']}"
     )
     print(f"{prefix}_source_hit_rate: {summary['source_hit_rate']:.2f}")
+    print(
+        f"{prefix}_acceptable_source_hits: "
+        f"{summary['acceptable_source_hits']}/"
+        f"{summary['acceptable_source_evaluable']}"
+    )
+    print(
+        f"{prefix}_acceptable_source_hit_rate: "
+        f"{summary['acceptable_source_hit_rate']:.2f}"
+    )
+    print(
+        f"{prefix}_source_group_hits: "
+        f"{summary['source_group_hits']}/"
+        f"{summary['source_group_evaluable']}"
+    )
+    print(
+        f"{prefix}_source_group_hit_rate: "
+        f"{summary['source_group_hit_rate']:.2f}"
+    )
+    print(f"{prefix}_mrr_at_k: {summary['mrr_at_k']:.2f}")
+    print(f"{prefix}_recall_at_k: {summary['recall_at_k']:.2f}")
     print(
         f"{prefix}_keyword_hits: "
         f"{summary['keyword_hits']}/{summary['expected_keywords']}"
