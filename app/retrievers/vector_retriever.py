@@ -98,3 +98,32 @@ def search_top_k(
         )
 
     return results
+
+
+class VectorRetriever:
+    def __init__(
+        self,
+        chunks_path: Path = DEFAULT_CHUNKS_PATH,
+        embeddings_path: Path = DEFAULT_EMBEDDINGS_PATH,
+        model_name: str = DEFAULT_MODEL_NAME,
+    ) -> None:
+        self.chunks_path = chunks_path
+        self.embeddings_path = embeddings_path
+        self.model_name = model_name
+
+    def search(self, query: str, top_k: int = 3) -> list[dict]:
+        results = search_top_k(
+            query=query,
+            top_k=top_k,
+            chunks_path=self.chunks_path,
+            embeddings_path=self.embeddings_path,
+            model_name=self.model_name,
+        )
+
+        for item in results:
+            score = float(item.get("score") or 0)
+            item["retrieval_score_detail"] = {
+                "vector_score": score,
+            }
+
+        return results

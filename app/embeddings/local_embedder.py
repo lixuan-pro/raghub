@@ -1,4 +1,5 @@
 DEFAULT_MODEL_NAME = "BAAI/bge-base-zh-v1.5"
+_MODEL_CACHE = {}
 
 
 def get_embedding_model(model_name: str = DEFAULT_MODEL_NAME):
@@ -9,7 +10,10 @@ def get_embedding_model(model_name: str = DEFAULT_MODEL_NAME):
     """
     from sentence_transformers import SentenceTransformer
 
-    return SentenceTransformer(model_name)
+    if model_name not in _MODEL_CACHE:
+        _MODEL_CACHE[model_name] = SentenceTransformer(model_name)
+
+    return _MODEL_CACHE[model_name]
 
 
 def embed_texts(
