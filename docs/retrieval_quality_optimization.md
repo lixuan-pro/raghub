@@ -122,10 +122,10 @@ eval/retrieval_comparison.json
 
 | mode | exact_source_hit_rate | acceptable_source_hit_rate | source_group_hit_rate | keyword_hit_rate | MRR@k | Recall@k |
 | ---- | --------------------: | -------------------------: | --------------------: | ---------------: | ----: | -------: |
-| vector | 0.61 | 0.78 | 0.61 | 0.72 | 0.69 | 0.78 |
-| bm25 | 0.44 | 0.61 | 0.50 | 0.77 | 0.48 | 0.61 |
-| hybrid | 0.61 | 0.83 | 0.61 | 0.80 | 0.63 | 0.83 |
-| hybrid_rerank | 0.61 | 0.83 | 0.61 | 0.80 | 0.63 | 0.83 |
+| vector | 0.61 | 0.78 | 0.78 | 0.72 | 0.69 | 0.78 |
+| bm25 | 0.44 | 0.61 | 0.61 | 0.77 | 0.48 | 0.61 |
+| hybrid | 0.61 | 0.83 | 0.83 | 0.80 | 0.63 | 0.83 |
+| hybrid_rerank | 0.61 | 0.83 | 0.83 | 0.80 | 0.63 | 0.83 |
 
 ## 7. 结论
 
@@ -134,13 +134,14 @@ eval/retrieval_comparison.json
 有改善的指标：
 
 - acceptable source hit 从 `0.78` 到 `0.83`。
+- source group hit 从 `0.78` 到 `0.83`。
 - keyword hit 从 `0.72` 到 `0.80`。
 - Recall@k 从 `0.78` 到 `0.83`。
 
 没有改善的指标：
 
 - exact source hit 仍为 `0.61`。
-- source group hit 仍为 `0.61`。
+- hybrid_rerank 与 hybrid 指标一致，本轮 lightweight rerank 没有带来额外收益。
 - MRR@k 从 `0.69` 下降到 `0.63`，说明 hybrid 有时能召回可接受来源，但排序不一定更靠前。
 
 因此当前不建议把 hybrid 设为默认检索模式。更合理的表达是：

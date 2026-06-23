@@ -105,6 +105,78 @@ def test_source_grounding_helpers_track_acceptable_and_group_hits():
     assert run_eval.reciprocal_rank(2) == 0.5
 
 
+def test_source_group_lookup_keeps_shared_source_in_multiple_groups():
+    queries = [
+        {
+            "id": "q1",
+            "expected_source": "README.md",
+            "expected_sources": ["README.md", "docs/a.md"],
+            "expected_source_group": "group_a",
+        },
+        {
+            "id": "q2",
+            "expected_source": "README.md",
+            "expected_sources": ["README.md", "docs/b.md"],
+            "expected_source_group": "group_b",
+        },
+    ]
+
+    lookup = run_eval.build_source_group_lookup(queries)
+
+    assert lookup["group_a"] == {"README.md", "docs/a.md"}
+    assert lookup["group_b"] == {"README.md", "docs/b.md"}
+
+
+def test_source_group_hit_is_not_lost_when_shared_source_matches_current_group():
+    queries = [
+        {
+            "id": "q1",
+            "expected_source": "README.md",
+            "expected_sources": ["README.md", "docs/a.md"],
+            "expected_source_group": "group_a",
+        },
+        {
+            "id": "q2",
+            "expected_source": "README.md",
+            "expected_sources": ["README.md", "docs/b.md"],
+            "expected_source_group": "group_b",
+        },
+    ]
+    chunks = [{"source": "README.md"}]
+    lookup = run_eval.build_source_group_lookup(queries)
+
+    assert run_eval.is_acceptable_source_hit(
+        queries[0]["expected_sources"],
+        chunks,
+    )
+    assert run_eval.is_source_group_hit("group_a", chunks, lookup)
+
+
+def test_source_group_can_hit_related_source_outside_current_expected_sources():
+    queries = [
+        {
+            "id": "q1",
+            "expected_source": "README.md",
+            "expected_sources": ["README.md", "docs/a.md"],
+            "expected_source_group": "group_a",
+        },
+        {
+            "id": "q2",
+            "expected_source": "docs/a_extra.md",
+            "expected_sources": ["docs/a_extra.md"],
+            "expected_source_group": "group_a",
+        },
+    ]
+    chunks = [{"source": "docs/a_extra.md"}]
+    lookup = run_eval.build_source_group_lookup(queries)
+
+    assert not run_eval.is_acceptable_source_hit(
+        queries[0]["expected_sources"],
+        chunks,
+    )
+    assert run_eval.is_source_group_hit("group_a", chunks, lookup)
+
+
 def test_evaluate_query_records_expected_answerable(monkeypatch):
     def fake_generate_chat_response(query: str, top_k: int = 3):
         return {

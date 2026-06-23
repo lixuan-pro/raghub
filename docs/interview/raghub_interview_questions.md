@@ -372,7 +372,7 @@ Day 22 扩展到 254 chunks 后，RAGHub 的主要问题不是“没有资料”
 
 ### 项目中的具体实现
 
-新增 `BM25Retriever`、`HybridRetriever` 和 `scripts/run_retrieval_eval.py`。eval 从单一 `expected_source` 扩展为 exact / acceptable / source_group 三层指标，并增加 MRR@k 与 Recall@k。当前结果是：vector exact source hit 为 0.61，hybrid exact source hit 仍为 0.61；但 acceptable source hit 从 0.78 提升到 0.83，keyword hit 从 0.72 提升到 0.80。
+新增 `BM25Retriever`、`HybridRetriever` 和 `scripts/run_retrieval_eval.py`。eval 从单一 `expected_source` 扩展为 exact / acceptable / source_group 三层指标，并增加 MRR@k 与 Recall@k。当前结果是：vector exact source hit 为 0.61，hybrid exact source hit 仍为 0.61；但 acceptable source hit 和 source_group hit 从 0.78 提升到 0.83，keyword hit 从 0.72 提升到 0.80。hybrid_rerank 与 hybrid 指标一致，说明本轮 lightweight rerank 没有带来额外收益。
 
 ### 面试表达
 

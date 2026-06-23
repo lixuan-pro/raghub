@@ -137,7 +137,7 @@ reason=retrieval_evidence_found
 
 - query: `RAGHub 当前是否支持 OCR 处理扫描版 PDF？`、`RAGHub 当前是否已经接入 Qdrant 或 Milvus？`、`RAGHub 为什么当前没有接入 Qdrant 或 Milvus？`、`知识库更新策略中建议如何维护文档版本？` 等。
 - expected: hybrid retrieval 能提高合理来源覆盖，同时不牺牲 v0.2 frozen 的默认 vector 行为。
-- actual: `scripts/run_retrieval_eval.py` 显示 vector exact source hit 为 `0.61`，hybrid 和 hybrid_rerank exact source hit 仍为 `0.61`。hybrid 的 acceptable source hit 从 `0.78` 提高到 `0.83`，keyword hit 从 `0.72` 提高到 `0.80`，但未解决最直接 source grounding。
+- actual: `scripts/run_retrieval_eval.py` 显示 vector exact source hit 为 `0.61`，hybrid 和 hybrid_rerank exact source hit 仍为 `0.61`。hybrid 的 acceptable source hit 和 source_group hit 从 `0.78` 提高到 `0.83`，keyword hit 从 `0.72` 提高到 `0.80`；hybrid_rerank 与 hybrid 指标一致，未带来额外收益，也未解决最直接 source grounding。
 - problem_type: hybrid_ablation_exact_source_not_improved
 - root_cause: 当前失败不只是 score fusion 问题。OCR、Qdrant/Milvus、provider、知识库更新等主题在 README、scope、eval review、demo policy 文档中高度相似，固定长度 chunk 和普通 source path 加分无法稳定区分最直接来源。
 - current_status: v0.3-lite 保留 hybrid 作为实验能力，不设为默认 `RETRIEVER_PROVIDER`。默认 `/retrieve` 和 `/chat` 仍走 vector，避免 hybrid final_score 改变 no-answer 阈值语义。

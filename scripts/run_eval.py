@@ -74,16 +74,17 @@ def get_expected_sources(item: dict[str, Any]) -> list[str]:
 
 def build_source_group_lookup(
     queries: list[dict[str, Any]],
-) -> dict[str, str]:
-    lookup: dict[str, str] = {}
+) -> dict[str, set[str]]:
+    lookup: dict[str, set[str]] = {}
 
     for item in queries:
         expected_source_group = item.get("expected_source_group")
         if not expected_source_group:
             continue
 
+        group_sources = lookup.setdefault(expected_source_group, set())
         for source in get_expected_sources(item):
-            lookup[source] = expected_source_group
+            group_sources.add(source)
 
     return lookup
 
@@ -105,14 +106,17 @@ def is_acceptable_source_hit(
 def is_source_group_hit(
     expected_source_group: str | None,
     retrieved_chunks: list[dict[str, Any]],
-    source_group_lookup: dict[str, str],
+    source_group_lookup: dict[str, set[str]],
 ) -> bool:
     if not expected_source_group:
         return False
 
+    expected_group_sources = source_group_lookup.get(expected_source_group, set())
+    if not expected_group_sources:
+        return False
+
     return any(
-        source_group_lookup.get(str(chunk.get("source") or ""))
-        == expected_source_group
+        str(chunk.get("source") or "") in expected_group_sources
         for chunk in retrieved_chunks
     )
 
@@ -139,7 +143,7 @@ def reciprocal_rank(rank: int | None) -> float:
 def evaluate_query(
     item: dict[str, Any],
     top_k: int = 3,
-    source_group_lookup: dict[str, str] | None = None,
+    source_group_lookup: dict[str, set[str]] | None = None,
 ) -> dict[str, Any]:
     response = generate_chat_response(query=item["query"], top_k=top_k)
     retrieved_chunks = response["retrieved_chunks"]

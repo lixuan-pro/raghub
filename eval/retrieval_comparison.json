@@ -9,9 +9,9 @@
       "acceptable_source_hits": 14,
       "acceptable_source_evaluable": 18,
       "acceptable_source_hit_rate": 0.7777777777777778,
-      "source_group_hits": 11,
+      "source_group_hits": 14,
       "source_group_evaluable": 18,
-      "source_group_hit_rate": 0.6111111111111112,
+      "source_group_hit_rate": 0.7777777777777778,
       "keyword_hits": 62,
       "expected_keywords": 86,
       "keyword_hit_rate": 0.7209302325581395,
@@ -113,9 +113,9 @@
       "acceptable_source_hits": 11,
       "acceptable_source_evaluable": 18,
       "acceptable_source_hit_rate": 0.6111111111111112,
-      "source_group_hits": 9,
+      "source_group_hits": 11,
       "source_group_evaluable": 18,
-      "source_group_hit_rate": 0.5,
+      "source_group_hit_rate": 0.6111111111111112,
       "keyword_hits": 66,
       "expected_keywords": 86,
       "keyword_hit_rate": 0.7674418604651163,
@@ -192,7 +192,7 @@
             "README.md"
           ],
           "acceptable_source_hit": true,
-          "source_group_hit": false
+          "source_group_hit": true
         },
         {
           "id": "q014",
@@ -253,9 +253,9 @@
       "acceptable_source_hits": 15,
       "acceptable_source_evaluable": 18,
       "acceptable_source_hit_rate": 0.8333333333333334,
-      "source_group_hits": 11,
+      "source_group_hits": 15,
       "source_group_evaluable": 18,
-      "source_group_hit_rate": 0.6111111111111112,
+      "source_group_hit_rate": 0.8333333333333334,
       "keyword_hits": 69,
       "expected_keywords": 86,
       "keyword_hit_rate": 0.8023255813953488,
@@ -308,7 +308,7 @@
             "eval/bad_cases.md"
           ],
           "acceptable_source_hit": true,
-          "source_group_hit": false
+          "source_group_hit": true
         },
         {
           "id": "q014",
@@ -357,9 +357,9 @@
       "acceptable_source_hits": 15,
       "acceptable_source_evaluable": 18,
       "acceptable_source_hit_rate": 0.8333333333333334,
-      "source_group_hits": 11,
+      "source_group_hits": 15,
       "source_group_evaluable": 18,
-      "source_group_hit_rate": 0.6111111111111112,
+      "source_group_hit_rate": 0.8333333333333334,
       "keyword_hits": 69,
       "expected_keywords": 86,
       "keyword_hit_rate": 0.8023255813953488,
@@ -412,7 +412,7 @@
             "eval/bad_cases.md"
           ],
           "acceptable_source_hit": true,
-          "source_group_hit": false
+          "source_group_hit": true
         },
         {
           "id": "q014",
@@ -523,7 +523,7 @@
         "source_group_evaluable": true,
         "exact_source_hit": true,
         "acceptable_source_hit": true,
-        "source_group_hit": false,
+        "source_group_hit": true,
         "source_hit_rank": 1,
         "mrr_at_k": 1.0,
         "recall_at_k": 1
@@ -674,7 +674,7 @@
         "source_group_evaluable": true,
         "exact_source_hit": true,
         "acceptable_source_hit": true,
-        "source_group_hit": false,
+        "source_group_hit": true,
         "source_hit_rank": 2,
         "mrr_at_k": 0.5,
         "recall_at_k": 1
@@ -749,7 +749,7 @@
         "source_group_evaluable": true,
         "exact_source_hit": true,
         "acceptable_source_hit": true,
-        "source_group_hit": false,
+        "source_group_hit": true,
         "source_hit_rank": 1,
         "mrr_at_k": 1.0,
         "recall_at_k": 1
@@ -2006,7 +2006,7 @@
         "source_group_evaluable": true,
         "exact_source_hit": true,
         "acceptable_source_hit": true,
-        "source_group_hit": false,
+        "source_group_hit": true,
         "source_hit_rank": 1,
         "mrr_at_k": 1.0,
         "recall_at_k": 1
@@ -2811,7 +2811,7 @@
         "source_group_evaluable": true,
         "exact_source_hit": false,
         "acceptable_source_hit": true,
-        "source_group_hit": false,
+        "source_group_hit": true,
         "source_hit_rank": 2,
         "mrr_at_k": 0.5,
         "recall_at_k": 1
@@ -3512,7 +3512,7 @@
         "source_group_evaluable": true,
         "exact_source_hit": true,
         "acceptable_source_hit": true,
-        "source_group_hit": false,
+        "source_group_hit": true,
         "source_hit_rank": 2,
         "mrr_at_k": 0.5,
         "recall_at_k": 1
@@ -3700,7 +3700,7 @@
         "source_group_evaluable": true,
         "exact_source_hit": true,
         "acceptable_source_hit": true,
-        "source_group_hit": false,
+        "source_group_hit": true,
         "source_hit_rank": 2,
         "mrr_at_k": 0.5,
         "recall_at_k": 1
@@ -3793,7 +3793,7 @@
         "source_group_evaluable": true,
         "exact_source_hit": true,
         "acceptable_source_hit": true,
-        "source_group_hit": false,
+        "source_group_hit": true,
         "source_hit_rank": 2,
         "mrr_at_k": 0.5,
         "recall_at_k": 1
@@ -4517,7 +4517,7 @@
         "source_group_evaluable": true,
         "exact_source_hit": false,
         "acceptable_source_hit": true,
-        "source_group_hit": false,
+        "source_group_hit": true,
         "source_hit_rank": 2,
         "mrr_at_k": 0.5,
         "recall_at_k": 1
@@ -5363,7 +5363,7 @@
         "source_group_evaluable": true,
         "exact_source_hit": true,
         "acceptable_source_hit": true,
-        "source_group_hit": false,
+        "source_group_hit": true,
         "source_hit_rank": 2,
         "mrr_at_k": 0.5,
         "recall_at_k": 1
@@ -5551,7 +5551,7 @@
         "source_group_evaluable": true,
         "exact_source_hit": true,
         "acceptable_source_hit": true,
-        "source_group_hit": false,
+        "source_group_hit": true,
         "source_hit_rank": 2,
         "mrr_at_k": 0.5,
         "recall_at_k": 1
@@ -5644,7 +5644,7 @@
         "source_group_evaluable": true,
         "exact_source_hit": true,
         "acceptable_source_hit": true,
-        "source_group_hit": false,
+        "source_group_hit": true,
         "source_hit_rank": 2,
         "mrr_at_k": 0.5,
         "recall_at_k": 1
@@ -6368,7 +6368,7 @@
         "source_group_evaluable": true,
         "exact_source_hit": false,
         "acceptable_source_hit": true,
-        "source_group_hit": false,
+        "source_group_hit": true,
         "source_hit_rank": 2,
         "mrr_at_k": 0.5,
         "recall_at_k": 1

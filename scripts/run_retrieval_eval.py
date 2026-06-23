@@ -45,7 +45,7 @@ class CachedRetriever:
 def evaluate_retrieval_query(
     item: dict[str, Any],
     retrieved_chunks: list[dict[str, Any]],
-    source_group_lookup: dict[str, str],
+    source_group_lookup: dict[str, set[str]],
 ) -> dict[str, Any]:
     expected_keywords = item.get("expected_keywords", [])
     expected_source = item.get("expected_source")

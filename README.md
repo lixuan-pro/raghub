@@ -110,12 +110,12 @@ v0.3-lite 新增 retrieval-only 对比实验，不调用 LLM，不覆盖 `eval/r
 
 | mode | exact_source_hit_rate | acceptable_source_hit_rate | source_group_hit_rate | keyword_hit_rate | MRR@k | Recall@k |
 | ---- | --------------------: | -------------------------: | --------------------: | ---------------: | ----: | -------: |
-| vector | 0.61 | 0.78 | 0.61 | 0.72 | 0.69 | 0.78 |
-| bm25 | 0.44 | 0.61 | 0.50 | 0.77 | 0.48 | 0.61 |
-| hybrid | 0.61 | 0.83 | 0.61 | 0.80 | 0.63 | 0.83 |
-| hybrid_rerank | 0.61 | 0.83 | 0.61 | 0.80 | 0.63 | 0.83 |
+| vector | 0.61 | 0.78 | 0.78 | 0.72 | 0.69 | 0.78 |
+| bm25 | 0.44 | 0.61 | 0.61 | 0.77 | 0.48 | 0.61 |
+| hybrid | 0.61 | 0.83 | 0.83 | 0.80 | 0.63 | 0.83 |
+| hybrid_rerank | 0.61 | 0.83 | 0.83 | 0.80 | 0.63 | 0.83 |
 
-结论：hybrid 提高了 acceptable source hit 和 keyword hit，但没有提高 exact source hit，因此当前不建议设为默认检索模式。完整实验记录见 `docs/retrieval_quality_optimization.md`。
+结论：hybrid 提高了 acceptable source hit、source_group hit 和 keyword hit，但没有提高 exact source hit；lightweight rerank 在当前配置下没有带来额外指标收益，因此当前不建议设为默认检索模式。完整实验记录见 `docs/retrieval_quality_optimization.md`。
 
 ## 当前边界
 
@@ -970,7 +970,7 @@ python -m pytest
 当前测试结果：
 
 ```text
-44 passed
+47 passed
 ```
 
 ---
