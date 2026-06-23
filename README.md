@@ -1053,3 +1053,19 @@ python -m pytest
 - Docker 部署
 
 这些内容会在后续阶段按优先级逐步评估，不属于当前 v0.2 已完成能力。
+
+## Eval-100 可信度补强
+
+feature/eval-100 将 `eval/queries.jsonl` 从 20 条扩展到 100 条，覆盖 API、loader/chunking、embedding/retrieval、LLM provider、citation/no-answer、eval/badcase、RAG engineering、demo corpus 和 out-of-corpus。输出文件不覆盖旧 v0.2/v0.3-lite 结果：
+
+```text
+eval/results_100.json
+eval/retrieval_comparison_100.json
+eval/llm_ab_review_100_results.json
+eval/llm_ab_review_100.md
+docs/eval_100_report.md
+```
+
+Retrieval-only Eval-100 中，vector exact/acceptable/source_group/keyword 为 `0.59/0.80/0.91/0.64`，hybrid 为 `0.59/0.81/0.92/0.68`。DeepSeek A/B Eval-100 中，vector average_score 为 `8.03`，hybrid 为 `8.09`，winner 分布为 vector 17、hybrid 13、tie 70。
+
+结论：Eval-100 比 20 条更能暴露真实边界。hybrid 在 retrieval coverage 和平均分上有小幅收益，但 exact source hit 未提升，out-of-corpus 拒答只有 `4/12`，因此不建议把 hybrid 设为默认检索模式。Eval-100 仍是项目级小型评测，不是生产级 benchmark。

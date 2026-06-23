@@ -450,3 +450,17 @@ loader、chunker、retriever、service、prompt 都是显式实现。
 ### 后续可增强
 
 继续扩展真实 LLM、向量数据库和系统化 eval。
+
+## Q：Eval-100 相比 20 条 eval 说明了什么？
+
+### 回答要点
+
+Eval-100 把问题集扩展到 100 条，覆盖 9 个类别、3 个难度和 12 条 out-of-corpus，比 20 条小样本更能暴露检索、引用和拒答边界。
+
+### 项目中的具体实现
+
+新增 `eval/results_100.json`、`eval/retrieval_comparison_100.json`、`eval/llm_ab_review_100_results.json`、`eval/llm_ab_review_100.md` 和 `docs/eval_100_report.md`。retrieval-only 中 hybrid 的 acceptable/source_group/keyword 略好于 vector，但 exact source hit 仍为 0.59；DeepSeek A/B 中 vector 平均分 8.03，hybrid 平均分 8.09，winner 分布为 vector 17、hybrid 13、tie 70。
+
+### 面试表达
+
+我不会把 Eval-100 包装成生产级 benchmark。更准确的说法是：它比 20 条更可信，能说明 hybrid 有小幅 coverage 收益，但也暴露 out-of-corpus 拒答不足和 source competition，所以当前仍不建议把 hybrid 设为默认。

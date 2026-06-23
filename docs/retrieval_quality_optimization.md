@@ -216,3 +216,39 @@ Hybrid 仍未解决的 exact miss 包括：
 - 对 q006/q007/q014 这类边界问题增加更明确的能力边界文档结构。
 
 当前 v0.3-lite 是实验版，不是生产级检索系统。
+
+## 11. Eval-100 Follow-up
+
+feature/eval-100 将评测集扩展到 100 条，不继续调检索算法，不改变默认 provider，也不把 hybrid 设为默认。新增输出：
+
+```text
+eval/results_100.json
+eval/retrieval_comparison_100.json
+eval/llm_ab_review_100_results.json
+eval/llm_ab_review_100.md
+docs/eval_100_report.md
+```
+
+Retrieval-only Eval-100：
+
+| mode | exact | acceptable | source_group | keyword | MRR@k | Recall@k |
+| ---- | ----: | ---------: | -----------: | ------: | ----: | -------: |
+| vector | 0.59 | 0.80 | 0.91 | 0.64 | 0.66 | 0.80 |
+| bm25 | 0.44 | 0.69 | 0.83 | 0.67 | 0.57 | 0.69 |
+| hybrid | 0.59 | 0.81 | 0.92 | 0.68 | 0.66 | 0.81 |
+| hybrid_rerank | 0.60 | 0.81 | 0.92 | 0.68 | 0.66 | 0.81 |
+
+DeepSeek A/B Eval-100：
+
+| metric | vector | hybrid |
+| ------ | -----: | -----: |
+| average_score | 8.03 | 8.09 |
+| exact_source_hit_rate | 0.59 | 0.59 |
+| acceptable_source_hit_rate | 0.80 | 0.81 |
+| source_group_hit_rate | 0.91 | 0.92 |
+| keyword_hit_rate | 0.74 | 0.77 |
+| out_of_corpus_rejected | 4/12 | 4/12 |
+
+Winner 分布：vector wins 17，hybrid wins 13，ties 70。
+
+结论：hybrid 在 100 条小型分层评测中有一定 coverage 收益，但 exact source hit 未提升，端到端 winner 分布也不是 hybrid 全面占优。当前仍不建议把 hybrid 设为默认检索模式。更合理的后续方向是 source_type filter、heading-aware chunk、metadata filter 和 answer-level source selection。

@@ -155,3 +155,23 @@ reason=retrieval_evidence_found
 - current_status: v0.3-lite 保留 hybrid 作为实验能力，不设为默认检索模式。本评测是 20 条 eval query 的小样本 review，不代表生产级准确率。
 - next_fix: 优先做 heading-aware Markdown chunk、metadata/source type filter、eval/review 文档检索分层，而不是继续调 fusion 权重。
 - interview_explanation: 这个 case 可以说明我做了端到端验证，而不是只看 retrieval-only 指标。结果显示 hybrid 有轻微收益，但大多数问题持平，所以我没有把它包装成“全面优于 vector”。
+
+## CASE-011：Eval-100 暴露 out-of-corpus 拒答不足
+
+- query: q091-q100 中的 API key、身份证号、未来 QPS、真实客户合同、医疗诊断、未发布上线日期、住址、未来评测分数、token、薪资表等问题。
+- expected: 全部应拒答，`expected_answerable=false`。
+- actual: default `/chat` Eval-100 中 out-of-corpus rejected 为 `4/12`；DeepSeek A/B 中 vector 和 hybrid 都是 `4/12`。
+- problem_type: out_of_corpus_rejection_gap
+- root_cause: 当前 out-of-scope 防护是轻量规则，能覆盖手机号、未来用户量等少数模板，但不能覆盖所有隐私、未来数据、外部业务数据和高风险请求。
+- current_status: 不把 Eval-100 的 answerability accuracy 包装成生产安全能力。该问题应作为下一轮 no-answer 分类和安全边界改进的首要 bad case。
+- next_fix: 引入更系统的 query scope classifier、source_type filter、answerability eval 扩展，或者在 `/chat` 前增加更严格的项目资料范围判断。
+
+## CASE-012：Eval-100 hybrid 收益有限且不适合作为默认
+
+- query: 100 条 Eval-100 分层问题。
+- expected: 验证 hybrid 在更大样本上是否稳定优于 vector。
+- actual: retrieval-only 中 hybrid acceptable/source_group/keyword 略高于 vector，但 exact source hit 与 vector 同为 `0.59`。DeepSeek A/B 中 vector 平均分 `8.03`，hybrid 平均分 `8.09`，winner 分布为 vector `17`、hybrid `13`、ties `70`。
+- problem_type: hybrid_eval_100_gain_is_limited
+- root_cause: hybrid 能带来更多相关上下文，但固定长度 chunk、eval/review 文档竞争和相似主题 source competition 仍存在；部分类别中 hybrid 也会引入噪声。
+- current_status: 保持默认 `RETRIEVER_PROVIDER=vector`，hybrid 仍作为实验模式保留。
+- next_fix: 优先做 source_type filter、heading-aware chunk、metadata filter 和 answer-level source selection，不继续盲调 fusion 权重。
