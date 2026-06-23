@@ -117,6 +117,19 @@ v0.3-lite 新增 retrieval-only 对比实验，不调用 LLM，不覆盖 `eval/r
 
 结论：hybrid 提高了 acceptable source hit、source_group hit 和 keyword hit，但没有提高 exact source hit；lightweight rerank 在当前配置下没有带来额外指标收益，因此当前不建议设为默认检索模式。完整实验记录见 `docs/retrieval_quality_optimization.md`。
 
+v0.3-lite 进一步新增 DeepSeek end-to-end A/B review，使用现有 `/chat` 链路，对同一批 20 条 eval query 比较 vector 与 hybrid。评分为轻量规则化 review，不是 LLM-as-judge，也不是生产级准确率证明。结果输出到 `eval/llm_ab_review_v0_3_results.json` 和 `eval/llm_ab_review_v0_3.md`：
+
+| metric | vector | hybrid |
+| --- | ---: | ---: |
+| average_score | 8.50 | 8.75 |
+| exact_source_hit_rate | 0.61 | 0.61 |
+| acceptable_source_hit_rate | 0.78 | 0.83 |
+| source_group_hit_rate | 0.78 | 0.83 |
+| keyword_hit_rate | 0.72 | 0.78 |
+| out_of_corpus_rejected | 2/2 | 2/2 |
+
+Winner 分布：vector wins 2，hybrid wins 3，ties 15。结论：hybrid 在小样本 A/B review 中带来轻微端到端评分提升，但大多数 query 持平，且 exact source hit 未提升，因此仍不建议设为默认检索模式。
+
 ## 当前边界
 
 RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。
@@ -203,9 +216,12 @@ RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。
 - `app/retrievers/hybrid_retriever.py` v0.3-lite hybrid fusion 与 lightweight rerank 实验模块
 - `scripts/retrieve_demo.py` 最小检索 demo 脚本
 - `scripts/run_retrieval_eval.py` v0.3-lite retrieval-only 对比实验脚本
+- `scripts/run_llm_ab_review_v0_3.py` v0.3-lite DeepSeek vector/hybrid A/B review 脚本
 - `tests/test_vector_retriever.py` 向量相似度测试
 - `eval/queries.jsonl` 最小 RAG eval 样例，包含 `in_corpus` 与 `out_of_corpus`
 - `eval/results.json` eval 运行结果
+- `eval/llm_ab_review_v0_3_results.json` v0.3-lite DeepSeek A/B review 结构化结果
+- `eval/llm_ab_review_v0_3.md` v0.3-lite DeepSeek A/B review 摘要
 - `eval/bad_cases.md` bad case 复盘
 - `eval/llm_answer_review.md` DeepSeek 小样本人工评审记录
 - `docs/design/preprocessing_pipeline.md` 文档导入与预处理链路设计说明
@@ -970,7 +986,7 @@ python -m pytest
 当前测试结果：
 
 ```text
-47 passed
+51 passed
 ```
 
 ---

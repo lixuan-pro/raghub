@@ -143,3 +143,15 @@ reason=retrieval_evidence_found
 - current_status: v0.3-lite 保留 hybrid 作为实验能力，不设为默认 `RETRIEVER_PROVIDER`。默认 `/retrieve` 和 `/chat` 仍走 vector，避免 hybrid final_score 改变 no-answer 阈值语义。
 - next_fix: 优先考虑 heading-aware Markdown chunk、metadata filter、eval/review 文档检索分层，或将 source_group metadata 写入索引；不要继续为当前 20 条 query 写硬编码规则。
 - interview_explanation: 这个 case 说明我不是只追求局部指标变好。hybrid 提升了合理来源覆盖，但没有提升 exact source hit，所以我把它记录为 ablation 结果，并明确不把实验能力升级为默认方案。
+
+## CASE-010：v0.3-lite DeepSeek A/B review 只有轻微端到端收益
+
+- query: 全部 20 条 `eval/queries.jsonl`。
+- expected: 验证 retrieval-only coverage 提升是否会传导到真实 DeepSeek `/chat` 回答质量。
+- actual: `scripts/run_llm_ab_review_v0_3.py` 显示 vector 平均分为 `8.50`，hybrid 平均分为 `8.75`；winner 分布为 vector wins `2`、hybrid wins `3`、ties `15`。hybrid 的 acceptable source hit 和 source_group hit 为 `0.83`，高于 vector 的 `0.78`，但 exact source hit 仍同为 `0.61`。
+- representative_cases: hybrid 在 q001、q005、q009 上更好；vector 在 q008、q016 上更好；q010、q011 两个 out-of-corpus 问题两种模式都正确拒答。
+- problem_type: hybrid_end_to_end_gain_is_small
+- root_cause: hybrid 能扩大合理来源覆盖，但固定长度 chunk、eval/review 文档竞争和相似主题 source 竞争仍存在。当前 lightweight scoring 也只是规则化 review，不是人工复审或生产级评测。
+- current_status: v0.3-lite 保留 hybrid 作为实验能力，不设为默认检索模式。本评测是 20 条 eval query 的小样本 review，不代表生产级准确率。
+- next_fix: 优先做 heading-aware Markdown chunk、metadata/source type filter、eval/review 文档检索分层，而不是继续调 fusion 权重。
+- interview_explanation: 这个 case 可以说明我做了端到端验证，而不是只看 retrieval-only 指标。结果显示 hybrid 有轻微收益，但大多数问题持平，所以我没有把它包装成“全面优于 vector”。

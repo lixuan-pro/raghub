@@ -151,7 +151,53 @@ Hybrid 能找到更多合理来源，但未完全解决最直接 source groundin
 后续更应该继续做 heading-aware chunk、metadata filter 或检索分层。
 ```
 
-## 8. 主要残留 bad case
+## 8. DeepSeek End-to-End A/B Review
+
+为了观察 retrieval-only 指标是否会传导到最终 `/chat` 回答，v0.3-lite 新增 DeepSeek A/B review：
+
+```text
+vector + DeepSeek /chat + 20 eval queries
+hybrid + DeepSeek /chat + 20 eval queries
+```
+
+本轮没有默认运行 `hybrid_rerank`。输出文件：
+
+```text
+eval/llm_ab_review_v0_3_results.json
+eval/llm_ab_review_v0_3.md
+```
+
+评分方式是轻量规则化 review：DeepSeek 负责生成 `/chat` 答案，脚本基于 answerability、source grounding、keyword coverage 和 out-of-corpus 拒答状态计算 0-10 分。它不是 LLM-as-judge，也不是人工评分或生产级准确率。
+
+当前结果：
+
+| metric | vector | hybrid |
+| --- | ---: | ---: |
+| average_score | 8.50 | 8.75 |
+| exact_source_hit_rate | 0.61 | 0.61 |
+| acceptable_source_hit_rate | 0.78 | 0.83 |
+| source_group_hit_rate | 0.78 | 0.83 |
+| keyword_hit_rate | 0.72 | 0.78 |
+| out_of_corpus_rejected | 2/2 | 2/2 |
+
+Winner 分布：
+
+```text
+vector wins: 2
+hybrid wins: 3
+ties: 15
+```
+
+代表性 case：
+
+- hybrid 更好：q001、q005、q009。
+- vector 更好：q008、q016。
+- 持平：q002、q003、q004、q006、q007 等。
+- out-of-corpus：q010、q011，vector 与 hybrid 都正确拒答。
+
+结论：hybrid 在 20 条小样本 A/B review 中平均分略高，但大多数 query 持平，exact source hit 仍为 `0.61`。因此不能说 hybrid 全面优于 vector，也不建议把 hybrid 设为默认检索模式。
+
+## 9. 主要残留 bad case
 
 Hybrid 仍未解决的 exact miss 包括：
 
@@ -160,7 +206,7 @@ Hybrid 仍未解决的 exact miss 包括：
 - q012：mock provider 问题命中 demo corpus provider 文档或 README，但没有命中最直接 `mock_vs_deepseek.md`。
 - q019：知识库更新问题能命中 `change_log_policy.md`，但最直接 `knowledge_base_update_policy.md` 仍不稳定。
 
-## 9. 后续方向
+## 10. 后续方向
 
 优先级高于继续调 fusion 权重：
 

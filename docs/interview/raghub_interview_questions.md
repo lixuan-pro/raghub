@@ -372,11 +372,11 @@ Day 22 扩展到 254 chunks 后，RAGHub 的主要问题不是“没有资料”
 
 ### 项目中的具体实现
 
-新增 `BM25Retriever`、`HybridRetriever` 和 `scripts/run_retrieval_eval.py`。eval 从单一 `expected_source` 扩展为 exact / acceptable / source_group 三层指标，并增加 MRR@k 与 Recall@k。当前结果是：vector exact source hit 为 0.61，hybrid exact source hit 仍为 0.61；但 acceptable source hit 和 source_group hit 从 0.78 提升到 0.83，keyword hit 从 0.72 提升到 0.80。hybrid_rerank 与 hybrid 指标一致，说明本轮 lightweight rerank 没有带来额外收益。
+新增 `BM25Retriever`、`HybridRetriever`、`scripts/run_retrieval_eval.py` 和 `scripts/run_llm_ab_review_v0_3.py`。eval 从单一 `expected_source` 扩展为 exact / acceptable / source_group 三层指标，并增加 MRR@k 与 Recall@k。retrieval-only 结果是：vector exact source hit 为 0.61，hybrid exact source hit 仍为 0.61；但 acceptable source hit 和 source_group hit 从 0.78 提升到 0.83，keyword hit 从 0.72 提升到 0.80。hybrid_rerank 与 hybrid 指标一致，说明本轮 lightweight rerank 没有带来额外收益。DeepSeek A/B review 中，vector 平均分 8.50，hybrid 平均分 8.75；winner 分布是 vector 2、hybrid 3、tie 15，说明 hybrid 端到端有轻微收益但大多数问题持平。
 
 ### 面试表达
 
-我不会把这个包装成“检索显著提升”。更准确的结论是：hybrid 能找到更多合理来源，但没有完全解决最直接 source grounding。后续应该优先做 heading-aware chunk、metadata filter 或检索分层，而不是继续盲目调权重。
+我不会把这个包装成“检索显著提升”。更准确的结论是：hybrid 能找到更多合理来源，在 20 条 DeepSeek A/B 小样本里平均分略高，但没有提升 exact source hit，也没有全面赢过 vector。后续应该优先做 heading-aware chunk、metadata filter 或检索分层，而不是继续盲目调权重。
 
 ## 工程问题与边界
 
