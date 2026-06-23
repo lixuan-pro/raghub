@@ -1,3 +1,4 @@
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -14,8 +15,13 @@ QUERIES_PATH = PROJECT_ROOT / "eval" / "queries.jsonl"
 RESULTS_PATH = PROJECT_ROOT / "eval" / "results.json"
 
 
+def resolve_project_path(path: Path) -> Path:
+    return path if path.is_absolute() else PROJECT_ROOT / path
+
+
 def load_eval_queries(path: Path = QUERIES_PATH) -> list[dict[str, Any]]:
     queries: list[dict[str, Any]] = []
+    path = resolve_project_path(path)
 
     with path.open("r", encoding="utf-8") as f:
         for line in f:
@@ -169,6 +175,8 @@ def evaluate_query(
     return {
         "id": item["id"],
         "query": item["query"],
+        "category": item.get("category", "uncategorized"),
+        "difficulty": item.get("difficulty", "unknown"),
         "case_type": item.get("case_type", "in_corpus"),
         "note": item.get("note", ""),
         "answer": response["answer"],
@@ -208,7 +216,7 @@ def evaluate_query(
     }
 
 
-def build_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
+def build_metric_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
     source_evaluable = [item for item in results if item.get("source_evaluable")]
     source_hits = sum(1 for item in source_evaluable if item["source_hit"])
     acceptable_source_evaluable = [
@@ -231,8 +239,15 @@ def build_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
         float(item.get("recall_at_k") or 0)
         for item in acceptable_source_evaluable
     )
-    total_keyword_hits = sum(item["keyword_hit_count"] for item in results)
-    total_expected_keywords = sum(len(item["expected_keywords"]) for item in results)
+    keyword_evaluable = [
+        item
+        for item in results
+        if item.get("expected_answerable") is not False
+    ]
+    total_keyword_hits = sum(item["keyword_hit_count"] for item in keyword_evaluable)
+    total_expected_keywords = sum(
+        len(item["expected_keywords"]) for item in keyword_evaluable
+    )
     answerable_count = sum(1 for item in results if item.get("is_answerable"))
 
     answerable_evaluable = [
@@ -253,13 +268,23 @@ def build_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
     expected_unanswerable_rejected = sum(
         1 for item in expected_unanswerable_items if item.get("is_answerable") is False
     )
+    in_corpus_count = sum(1 for item in results if item.get("case_type", "in_corpus") == "in_corpus")
+    out_of_corpus_count = sum(1 for item in results if item.get("case_type") == "out_of_corpus")
 
     return {
         "total": len(results),
+        "total_queries": len(results),
+        "in_corpus_count": in_corpus_count,
+        "out_of_corpus_count": out_of_corpus_count,
         "answerable_count": answerable_count,
         "answerable_total": len(answerable_evaluable),
         "answerable_correct": answerable_correct,
         "answerable_accuracy": (
+            answerable_correct / len(answerable_evaluable)
+            if answerable_evaluable
+            else 0
+        ),
+        "answerability_accuracy": (
             answerable_correct / len(answerable_evaluable)
             if answerable_evaluable
             else 0
@@ -278,6 +303,7 @@ def build_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
             if expected_unanswerable_items
             else 0
         ),
+        "out_of_corpus_rejected": expected_unanswerable_rejected,
         "source_hits": source_hits,
         "source_evaluable": len(source_evaluable),
         "source_hit_rate": (
@@ -326,6 +352,27 @@ def build_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def build_breakdown(
+    results: list[dict[str, Any]],
+    field: str,
+) -> dict[str, dict[str, Any]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for item in results:
+        value = str(item.get(field) or "unknown")
+        grouped.setdefault(value, []).append(item)
+    return {
+        value: build_metric_summary(items)
+        for value, items in sorted(grouped.items())
+    }
+
+
+def build_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
+    summary = build_metric_summary(results)
+    summary["category_breakdown"] = build_breakdown(results, "category")
+    summary["difficulty_breakdown"] = build_breakdown(results, "difficulty")
+    return summary
+
+
 def group_results_by_case_type(
     results: list[dict[str, Any]],
 ) -> dict[str, list[dict[str, Any]]]:
@@ -354,12 +401,18 @@ def collect_case_notes(results: list[dict[str, Any]]) -> dict[str, list[str]]:
     return notes
 
 
-def run_eval() -> dict[str, Any]:
-    queries = load_eval_queries()
+def run_eval(
+    queries_path: Path = QUERIES_PATH,
+    output_path: Path = RESULTS_PATH,
+    top_k: int = 3,
+) -> dict[str, Any]:
+    queries = load_eval_queries(queries_path)
+    output_path = resolve_project_path(output_path)
     source_group_lookup = build_source_group_lookup(queries)
     results = [
         evaluate_query(
             item,
+            top_k=top_k,
             source_group_lookup=source_group_lookup,
         )
         for item in queries
@@ -380,8 +433,8 @@ def run_eval() -> dict[str, Any]:
         "results": results,
     }
 
-    RESULTS_PATH.parent.mkdir(parents=True, exist_ok=True)
-    RESULTS_PATH.write_text(
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
         json.dumps(report, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
@@ -391,6 +444,9 @@ def run_eval() -> dict[str, Any]:
 
 def print_summary_line(prefix: str, summary: dict[str, Any]) -> None:
     print(f"{prefix}_total: {summary['total']}")
+    print(f"{prefix}_total_queries: {summary['total_queries']}")
+    print(f"{prefix}_in_corpus_count: {summary['in_corpus_count']}")
+    print(f"{prefix}_out_of_corpus_count: {summary['out_of_corpus_count']}")
     print(f"{prefix}_answerable: {summary['answerable_count']}/{summary['total']}")
     print(
         f"{prefix}_answerable_correct: "
@@ -447,8 +503,34 @@ def print_summary_line(prefix: str, summary: dict[str, Any]) -> None:
     print(f"{prefix}_keyword_hit_rate: {summary['keyword_hit_rate']:.2f}")
 
 
+def print_breakdown(title: str, breakdown: dict[str, dict[str, Any]]) -> None:
+    print(f"{title}:")
+    for key, summary in breakdown.items():
+        print(
+            f"- {key}: total={summary['total_queries']}, "
+            f"exact={summary['exact_source_hit_rate']:.2f}, "
+            f"acceptable={summary['acceptable_source_hit_rate']:.2f}, "
+            f"source_group={summary['source_group_hit_rate']:.2f}, "
+            f"keyword={summary['keyword_hit_rate']:.2f}"
+        )
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run RAGHub default /chat eval.")
+    parser.add_argument("--queries", type=Path, default=QUERIES_PATH)
+    parser.add_argument("--output", type=Path, default=RESULTS_PATH)
+    parser.add_argument("--top-k", type=int, default=3)
+    return parser.parse_args()
+
+
 def main() -> None:
-    report = run_eval()
+    args = parse_args()
+    output_path = resolve_project_path(args.output)
+    report = run_eval(
+        queries_path=args.queries,
+        output_path=output_path,
+        top_k=args.top_k,
+    )
     summary = report["summary"]
     all_cases = summary["all_cases"]
 
@@ -467,13 +549,16 @@ def main() -> None:
             f"{out_of_corpus['expected_unanswerable_total']}"
         )
 
+    print_breakdown("category_breakdown", all_cases["category_breakdown"])
+    print_breakdown("difficulty_breakdown", all_cases["difficulty_breakdown"])
+
     print("case_type_notes:")
     for case_type, notes in summary["case_type_notes"].items():
         print(f"- {case_type}:")
         for note in notes:
             print(f"  - {note}")
 
-    print(f"output: {RESULTS_PATH}")
+    print(f"output: {output_path}")
 
 
 if __name__ == "__main__":

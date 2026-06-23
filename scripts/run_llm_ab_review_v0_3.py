@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -10,6 +11,7 @@ from typing import Any
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(PROJECT_ROOT))
 
+from app.llm.base import LLMProviderError
 from app.services.rag_service import generate_chat_response
 from scripts.run_eval import (
     build_source_group_lookup,
@@ -19,12 +21,14 @@ from scripts.run_eval import (
     is_source_hit,
     load_eval_queries,
     match_keywords,
+    resolve_project_path,
 )
 
 
 DEFAULT_MODES = ("vector", "hybrid")
 SUPPORTED_MODES = ("vector", "bm25", "hybrid", "hybrid_rerank")
 DEFAULT_TOP_K = 3
+QUERIES_PATH = PROJECT_ROOT / "eval" / "queries.jsonl"
 RESULTS_PATH = PROJECT_ROOT / "eval" / "llm_ab_review_v0_3_results.json"
 REPORT_PATH = PROJECT_ROOT / "eval" / "llm_ab_review_v0_3.md"
 
@@ -229,6 +233,8 @@ def evaluate_query_for_mode(
     return {
         "id": item["id"],
         "query": item["query"],
+        "category": item.get("category", "uncategorized"),
+        "difficulty": item.get("difficulty", "unknown"),
         "mode": mode,
         "case_type": item.get("case_type", "in_corpus"),
         "expected_answerable": expected_answerable,
@@ -277,6 +283,8 @@ def summarize_mode(results: list[dict[str, Any]]) -> dict[str, Any]:
 
     return {
         "total_queries": len(results),
+        "in_corpus_count": sum(1 for item in results if item.get("case_type", "in_corpus") == "in_corpus"),
+        "out_of_corpus_count": len(out_of_corpus),
         "average_score": (
             sum(float(item["review_score"]) for item in results) / len(results)
             if results
@@ -356,6 +364,32 @@ def compare_vector_and_hybrid(
     return comparisons
 
 
+def build_mode_breakdown(
+    results_by_mode: dict[str, list[dict[str, Any]]],
+    field: str,
+) -> dict[str, dict[str, dict[str, Any]]]:
+    groups = sorted(
+        {
+            str(item.get(field) or "unknown")
+            for results in results_by_mode.values()
+            for item in results
+        }
+    )
+    return {
+        group: {
+            mode: summarize_mode(
+                [
+                    item
+                    for item in results
+                    if str(item.get(field) or "unknown") == group
+                ]
+            )
+            for mode, results in results_by_mode.items()
+        }
+        for group in groups
+    }
+
+
 def build_summary(
     results_by_mode: dict[str, list[dict[str, Any]]],
     comparisons: list[dict[str, Any]],
@@ -378,6 +412,8 @@ def build_summary(
             1 for item in comparisons if item["winner"] == "hybrid"
         ),
         "tie_count": sum(1 for item in comparisons if item["winner"] == "tie"),
+        "category_breakdown": build_mode_breakdown(results_by_mode, "category"),
+        "difficulty_breakdown": build_mode_breakdown(results_by_mode, "difficulty"),
     }
 
     for mode, mode_summary in by_mode.items():
@@ -420,6 +456,8 @@ def representative_cases(
         payload = {
             "id": query_id,
             "query": item["query"],
+            "category": item.get("category", "uncategorized"),
+            "difficulty": item.get("difficulty", "unknown"),
             "vector_score": item["vector_score"],
             "hybrid_score": item["hybrid_score"],
             "vector_comment": vector_item["review_comment"],
@@ -450,11 +488,17 @@ def write_markdown_report(report: dict[str, Any], path: Path) -> None:
         results_by_mode=report["results_by_mode"],
         comparisons=report["comparisons"],
     )
+    total_queries = summary.get("total_queries", 0)
+    title = (
+        "RAGHub Eval-100 DeepSeek A/B Review"
+        if total_queries == 100
+        else "RAGHub v0.3-lite DeepSeek A/B Review"
+    )
 
     lines = [
-        "# RAGHub v0.3-lite DeepSeek A/B Review",
+        f"# {title}",
         "",
-        "本评测使用现有 `/chat` 链路和 DeepSeek provider，对 `eval/queries.jsonl` 的 20 条 query 做 vector 与 hybrid 的端到端对比。评分为轻量规则化 review，不是 LLM-as-judge，也不是生产级准确率。",
+        f"本评测使用现有 `/chat` 链路和 DeepSeek provider，对 `eval/queries.jsonl` 的 {total_queries} 条 query 做 vector 与 hybrid 的端到端对比。评分为轻量规则化 review，不是 LLM-as-judge，也不是生产级准确率。",
         "",
         "## Summary",
         "",
@@ -473,9 +517,48 @@ def write_markdown_report(report: dict[str, Any], path: Path) -> None:
         f"- hybrid wins: {summary['hybrid_win_count']}",
         f"- ties: {summary['tie_count']}",
         "",
-        "## Representative Cases",
+        "## Category Breakdown",
         "",
+        "| category | vector_avg | hybrid_avg | vector_exact | hybrid_exact |",
+        "| --- | ---: | ---: | ---: | ---: |",
     ]
+
+    for category, modes in summary.get("category_breakdown", {}).items():
+        vector_category = modes.get("vector", {})
+        hybrid_category = modes.get("hybrid", {})
+        lines.append(
+            f"| {category} | {format_rate(vector_category.get('average_score', 0.0))} | "
+            f"{format_rate(hybrid_category.get('average_score', 0.0))} | "
+            f"{format_rate(vector_category.get('exact_source_hit_rate', 0.0))} | "
+            f"{format_rate(hybrid_category.get('exact_source_hit_rate', 0.0))} |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Difficulty Breakdown",
+            "",
+            "| difficulty | vector_avg | hybrid_avg | vector_exact | hybrid_exact |",
+            "| --- | ---: | ---: | ---: | ---: |",
+        ]
+    )
+    for difficulty, modes in summary.get("difficulty_breakdown", {}).items():
+        vector_difficulty = modes.get("vector", {})
+        hybrid_difficulty = modes.get("hybrid", {})
+        lines.append(
+            f"| {difficulty} | {format_rate(vector_difficulty.get('average_score', 0.0))} | "
+            f"{format_rate(hybrid_difficulty.get('average_score', 0.0))} | "
+            f"{format_rate(vector_difficulty.get('exact_source_hit_rate', 0.0))} | "
+            f"{format_rate(hybrid_difficulty.get('exact_source_hit_rate', 0.0))} |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Representative Cases",
+            "",
+        ]
+    )
 
     labels = {
         "hybrid_better": "Hybrid better",
@@ -491,26 +574,27 @@ def write_markdown_report(report: dict[str, Any], path: Path) -> None:
         for item in cases[key]:
             lines.append(
                 f"- `{item['id']}` {item['query']} "
-                f"(vector={item['vector_score']}, hybrid={item['hybrid_score']})"
+                f"(category={item['category']}, difficulty={item['difficulty']}, "
+                f"vector={item['vector_score']}, hybrid={item['hybrid_score']})"
             )
         lines.append("")
+
+    if hybrid.get("average_score", 0.0) > vector.get("average_score", 0.0):
+        conclusion = "在本轮小型分层评测中，hybrid 相比 vector 有一定提升。"
+    elif hybrid.get("average_score", 0.0) == vector.get("average_score", 0.0):
+        conclusion = "hybrid 提升 retrieval coverage，但 end-to-end 回答质量提升有限。"
+    else:
+        conclusion = "hybrid 引入更多相关上下文，但也可能带来噪声，因此不适合作为默认检索模式。"
 
     lines.extend(
         [
             "## Conclusion",
             "",
-            (
-                "Hybrid 在本轮小样本 A/B review 中平均分略高"
-                f"（vector={format_rate(vector.get('average_score', 0.0))}, "
-                f"hybrid={format_rate(hybrid.get('average_score', 0.0))}），"
-                f"winner 分布为 vector {summary['vector_win_count']}、"
-                f"hybrid {summary['hybrid_win_count']}、"
-                f"tie {summary['tie_count']}。"
-                "这说明 hybrid 有轻微端到端收益，但多数 query 持平，"
-                "且 exact source hit 没有提升，因此不建议设为默认检索模式。"
-            ),
+            conclusion,
             "",
-            "本评测是 20 条 eval query 的小样本 review，不代表生产级准确率。",
+            "Eval-100 仍是项目级小型评测，不是生产级 benchmark。",
+            "",
+            "当前不建议把 hybrid 设为默认检索模式；默认 `/retrieve` 和 `/chat` 仍保持 vector。",
             "",
         ]
     )
@@ -519,34 +603,126 @@ def write_markdown_report(report: dict[str, Any], path: Path) -> None:
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
+def load_checkpoint(
+    checkpoint_path: Path | None,
+    modes: list[str],
+) -> dict[str, list[dict[str, Any]]]:
+    if not checkpoint_path or not checkpoint_path.exists():
+        return {}
+
+    checkpoint = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+    checkpoint_results = checkpoint.get("results_by_mode", {})
+    return {
+        mode: list(checkpoint_results.get(mode, []))
+        for mode in modes
+    }
+
+
+def write_checkpoint(
+    checkpoint_path: Path | None,
+    *,
+    modes: list[str],
+    top_k: int,
+    results_by_mode: dict[str, list[dict[str, Any]]],
+) -> None:
+    if not checkpoint_path:
+        return
+
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    checkpoint_path.write_text(
+        json.dumps(
+            {
+                "review_date": date.today().isoformat(),
+                "provider": "deepseek",
+                "modes": modes,
+                "top_k": top_k,
+                "checkpoint": True,
+                "results_by_mode": results_by_mode,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+
+def evaluate_query_for_mode_with_retries(
+    *,
+    item: dict[str, Any],
+    mode: str,
+    top_k: int,
+    source_group_lookup: dict[str, set[str]],
+    max_retries: int,
+    retry_delay_seconds: float,
+) -> dict[str, Any]:
+    attempt = 0
+    while True:
+        try:
+            return evaluate_query_for_mode(
+                item=item,
+                mode=mode,
+                top_k=top_k,
+                source_group_lookup=source_group_lookup,
+            )
+        except LLMProviderError as exc:
+            if attempt >= max_retries:
+                raise
+            attempt += 1
+            print(
+                f"[{mode}] {item['id']} retry {attempt}/{max_retries}: {exc}",
+                file=sys.stderr,
+            )
+            time.sleep(retry_delay_seconds)
+
+
 def run_ab_review(
     modes: list[str],
+    queries_path: Path = QUERIES_PATH,
     top_k: int = DEFAULT_TOP_K,
+    checkpoint_path: Path | None = None,
+    max_retries: int = 2,
+    retry_delay_seconds: float = 5.0,
 ) -> dict[str, Any]:
     if not os.getenv("DEEPSEEK_API_KEY"):
         raise RuntimeError("DEEPSEEK_API_KEY is required but was not found")
 
-    queries = load_eval_queries()
+    queries = load_eval_queries(queries_path)
     source_group_lookup = build_source_group_lookup(queries)
-    results_by_mode: dict[str, list[dict[str, Any]]] = {}
+    results_by_mode: dict[str, list[dict[str, Any]]] = load_checkpoint(
+        checkpoint_path=checkpoint_path,
+        modes=modes,
+    )
     original_llm_provider = os.environ.get("LLM_PROVIDER")
     original_retriever_provider = os.environ.get("RETRIEVER_PROVIDER")
 
     try:
         os.environ["LLM_PROVIDER"] = "deepseek"
         for mode in modes:
-            mode_results = []
+            mode_results = results_by_mode.setdefault(mode, [])
+            completed_ids = {item["id"] for item in mode_results}
             for index, item in enumerate(queries, start=1):
+                if item["id"] in completed_ids:
+                    print(f"[{mode}] {index}/{len(queries)} {item['id']} skipped")
+                    continue
+
                 print(f"[{mode}] {index}/{len(queries)} {item['id']}")
                 mode_results.append(
-                    evaluate_query_for_mode(
+                    evaluate_query_for_mode_with_retries(
                         item=item,
                         mode=mode,
                         top_k=top_k,
                         source_group_lookup=source_group_lookup,
+                        max_retries=max_retries,
+                        retry_delay_seconds=retry_delay_seconds,
                     )
                 )
-            results_by_mode[mode] = mode_results
+                completed_ids.add(item["id"])
+                write_checkpoint(
+                    checkpoint_path,
+                    modes=modes,
+                    top_k=top_k,
+                    results_by_mode=results_by_mode,
+                )
     finally:
         if original_llm_provider is None:
             os.environ.pop("LLM_PROVIDER", None)
@@ -580,11 +756,11 @@ def run_ab_review(
         ],
     }
 
-
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run RAGHub v0.3-lite DeepSeek vector/hybrid A/B review."
+        description="Run RAGHub DeepSeek vector/hybrid A/B review."
     )
+    parser.add_argument("--queries", type=Path, default=QUERIES_PATH)
     parser.add_argument(
         "--modes",
         nargs="+",
@@ -592,13 +768,24 @@ def parse_args() -> argparse.Namespace:
         default=list(DEFAULT_MODES),
     )
     parser.add_argument("--top-k", type=int, default=DEFAULT_TOP_K)
+    parser.add_argument("--max-retries", type=int, default=2)
+    parser.add_argument("--retry-delay-seconds", type=float, default=5.0)
+    parser.add_argument(
+        "--checkpoint-output",
+        type=Path,
+        default=None,
+    )
     parser.add_argument(
         "--output-json",
+        "--output",
+        dest="output_json",
         type=Path,
         default=RESULTS_PATH,
     )
     parser.add_argument(
         "--output-md",
+        "--summary-output",
+        dest="output_md",
         type=Path,
         default=REPORT_PATH,
     )
@@ -607,13 +794,29 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    report = run_ab_review(modes=args.modes, top_k=args.top_k)
-    args.output_json.parent.mkdir(parents=True, exist_ok=True)
-    args.output_json.write_text(
+    output_json = resolve_project_path(args.output_json)
+    output_md = resolve_project_path(args.output_md)
+    checkpoint_output = (
+        resolve_project_path(args.checkpoint_output)
+        if args.checkpoint_output
+        else output_json.with_name(f"{output_json.stem}_checkpoint.json")
+    )
+    report = run_ab_review(
+        modes=args.modes,
+        queries_path=args.queries,
+        top_k=args.top_k,
+        checkpoint_path=checkpoint_output,
+        max_retries=args.max_retries,
+        retry_delay_seconds=args.retry_delay_seconds,
+    )
+    output_json.parent.mkdir(parents=True, exist_ok=True)
+    output_json.write_text(
         json.dumps(report, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
-    write_markdown_report(report=report, path=args.output_md)
+    write_markdown_report(report=report, path=output_md)
+    if checkpoint_output.exists():
+        checkpoint_output.unlink()
 
     summary = report["summary"]
     print("RAGHub DeepSeek A/B review")
@@ -636,8 +839,8 @@ def main() -> None:
         f"hybrid={summary['hybrid_win_count']}, "
         f"tie={summary['tie_count']}"
     )
-    print(f"output_json: {args.output_json}")
-    print(f"output_md: {args.output_md}")
+    print(f"output_json: {output_json}")
+    print(f"output_md: {output_md}")
 
 
 if __name__ == "__main__":

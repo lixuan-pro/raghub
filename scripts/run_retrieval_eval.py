@@ -1,3 +1,4 @@
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -24,9 +25,11 @@ from scripts.run_eval import (
     load_eval_queries,
     match_keywords,
     reciprocal_rank,
+    resolve_project_path,
 )
 
 
+QUERIES_PATH = PROJECT_ROOT / "eval" / "queries.jsonl"
 OUTPUT_PATH = PROJECT_ROOT / "eval" / "retrieval_comparison.json"
 TOP_K = 3
 
@@ -64,6 +67,8 @@ def evaluate_retrieval_query(
     return {
         "id": item["id"],
         "query": item["query"],
+        "category": item.get("category", "uncategorized"),
+        "difficulty": item.get("difficulty", "unknown"),
         "case_type": item.get("case_type", "in_corpus"),
         "expected_answerable": item.get("expected_answerable"),
         "expected_source": expected_source,
@@ -96,7 +101,10 @@ def evaluate_retrieval_query(
     }
 
 
-def build_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
+def build_metric_summary(
+    results: list[dict[str, Any]],
+    top_k: int = TOP_K,
+) -> dict[str, Any]:
     source_evaluable = [item for item in results if item["source_evaluable"]]
     acceptable_source_evaluable = [
         item for item in results if item["acceptable_source_evaluable"]
@@ -124,10 +132,15 @@ def build_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
         len(item["expected_keywords"])
         for item in keyword_evaluable
     )
+    in_corpus_count = sum(1 for item in results if item.get("case_type", "in_corpus") == "in_corpus")
+    out_of_corpus_count = sum(1 for item in results if item.get("case_type") == "out_of_corpus")
 
     return {
         "total": len(results),
-        "top_k": TOP_K,
+        "total_queries": len(results),
+        "in_corpus_count": in_corpus_count,
+        "out_of_corpus_count": out_of_corpus_count,
+        "top_k": top_k,
         "exact_source_hits": exact_source_hits,
         "exact_source_evaluable": len(source_evaluable),
         "exact_source_hit_rate": (
@@ -172,6 +185,31 @@ def build_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def build_breakdown(
+    results: list[dict[str, Any]],
+    field: str,
+    top_k: int = TOP_K,
+) -> dict[str, dict[str, Any]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for item in results:
+        value = str(item.get(field) or "unknown")
+        grouped.setdefault(value, []).append(item)
+    return {
+        value: build_metric_summary(items, top_k=top_k)
+        for value, items in sorted(grouped.items())
+    }
+
+
+def build_summary(
+    results: list[dict[str, Any]],
+    top_k: int = TOP_K,
+) -> dict[str, Any]:
+    summary = build_metric_summary(results, top_k=top_k)
+    summary["category_breakdown"] = build_breakdown(results, "category", top_k=top_k)
+    summary["difficulty_breakdown"] = build_breakdown(results, "difficulty", top_k=top_k)
+    return summary
+
+
 def collect_top_miss_cases(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
     misses = [
         item
@@ -192,21 +230,24 @@ def collect_top_miss_cases(results: list[dict[str, Any]]) -> list[dict[str, Any]
     ]
 
 
-def build_retrievers(queries: list[dict[str, Any]]) -> dict[str, Any]:
+def build_retrievers(
+    queries: list[dict[str, Any]],
+    top_k: int = TOP_K,
+) -> dict[str, Any]:
     query_texts = [item["query"] for item in queries]
     vector_retriever = VectorRetriever()
     bm25_retriever = BM25Retriever()
     vector_results_by_query = {
         query: vector_retriever.search(
             query=query,
-            top_k=max(TOP_K, DEFAULT_VECTOR_TOP_N),
+            top_k=max(top_k, DEFAULT_VECTOR_TOP_N),
         )
         for query in query_texts
     }
     bm25_results_by_query = {
         query: bm25_retriever.search(
             query=query,
-            top_k=max(TOP_K, DEFAULT_BM25_TOP_N),
+            top_k=max(top_k, DEFAULT_BM25_TOP_N),
         )
         for query in query_texts
     }
@@ -229,18 +270,23 @@ def build_retrievers(queries: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def run_retrieval_eval() -> dict[str, Any]:
-    queries = load_eval_queries()
+def run_retrieval_eval(
+    queries_path: Path = QUERIES_PATH,
+    output_path: Path = OUTPUT_PATH,
+    top_k: int = TOP_K,
+) -> dict[str, Any]:
+    queries = load_eval_queries(queries_path)
+    output_path = resolve_project_path(output_path)
     source_group_lookup = build_source_group_lookup(queries)
     report: dict[str, Any] = {
         "summary": {},
         "results": {},
     }
 
-    for mode, retriever in build_retrievers(queries).items():
+    for mode, retriever in build_retrievers(queries, top_k=top_k).items():
         mode_results = []
         for item in queries:
-            retrieved_chunks = retriever.search(query=item["query"], top_k=TOP_K)
+            retrieved_chunks = retriever.search(query=item["query"], top_k=top_k)
             mode_results.append(
                 evaluate_retrieval_query(
                     item=item,
@@ -249,10 +295,11 @@ def run_retrieval_eval() -> dict[str, Any]:
                 )
             )
 
-        report["summary"][mode] = build_summary(mode_results)
+        report["summary"][mode] = build_summary(mode_results, top_k=top_k)
         report["results"][mode] = mode_results
 
-    OUTPUT_PATH.write_text(
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
         json.dumps(report, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
@@ -260,7 +307,7 @@ def run_retrieval_eval() -> dict[str, Any]:
     return report
 
 
-def print_summary(report: dict[str, Any]) -> None:
+def print_summary(report: dict[str, Any], output_path: Path) -> None:
     print("RAGHub retrieval comparison")
     print(
         "mode\texact_source_hit_rate\tacceptable_source_hit_rate\t"
@@ -276,12 +323,28 @@ def print_summary(report: dict[str, Any]) -> None:
             f"{summary['mrr_at_k']:.2f}\t"
             f"{summary['recall_at_k']:.2f}"
         )
-    print(f"output: {OUTPUT_PATH}")
+    print(f"output: {output_path}")
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run RAGHub retrieval-only comparison."
+    )
+    parser.add_argument("--queries", type=Path, default=QUERIES_PATH)
+    parser.add_argument("--output", type=Path, default=OUTPUT_PATH)
+    parser.add_argument("--top-k", type=int, default=TOP_K)
+    return parser.parse_args()
 
 
 def main() -> None:
-    report = run_retrieval_eval()
-    print_summary(report)
+    args = parse_args()
+    output_path = resolve_project_path(args.output)
+    report = run_retrieval_eval(
+        queries_path=args.queries,
+        output_path=output_path,
+        top_k=args.top_k,
+    )
+    print_summary(report, output_path=output_path)
 
 
 if __name__ == "__main__":

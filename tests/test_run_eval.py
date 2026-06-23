@@ -250,3 +250,84 @@ def test_evaluate_query_records_source_grounding_metrics(monkeypatch):
     assert result["source_hit_rank"] == 2
     assert result["mrr_at_k"] == 0.5
     assert result["recall_at_k"] == 1
+
+def test_build_summary_includes_category_and_difficulty_breakdowns():
+    results = [
+        make_eval_result(
+            is_answerable=True,
+            expected_answerable=True,
+            source_hit=True,
+            source_evaluable=True,
+            acceptable_source_hit=True,
+            acceptable_source_evaluable=True,
+            source_group_hit=True,
+            source_group_evaluable=True,
+            mrr_at_k=1,
+            recall_at_k=1,
+            keyword_hit_count=1,
+            expected_keywords=["RAGHub"],
+        )
+        | {"category": "api", "difficulty": "basic", "case_type": "in_corpus"},
+        make_eval_result(
+            is_answerable=False,
+            expected_answerable=False,
+        )
+        | {
+            "category": "out_of_corpus",
+            "difficulty": "hard",
+            "case_type": "out_of_corpus",
+        },
+    ]
+
+    summary = run_eval.build_summary(results)
+
+    assert summary["total_queries"] == 2
+    assert summary["in_corpus_count"] == 1
+    assert summary["out_of_corpus_count"] == 1
+    assert summary["category_breakdown"]["api"]["total_queries"] == 1
+    assert summary["difficulty_breakdown"]["hard"]["out_of_corpus_count"] == 1
+
+
+def test_run_eval_writes_requested_output_without_overwriting_old(monkeypatch, tmp_path):
+    queries_path = tmp_path / "queries.jsonl"
+    queries_path.write_text(
+        '{"id":"q001","query":"query","category":"api","difficulty":"basic",'
+        '"case_type":"in_corpus","expected_answerable":true,'
+        '"expected_source":"README.md","expected_sources":["README.md"],'
+        '"expected_source_group":"group","expected_keywords":["RAGHub"]}\n',
+        encoding="utf-8",
+    )
+    old_output = tmp_path / "results.json"
+    old_output.write_text("old", encoding="utf-8")
+    output = tmp_path / "results_100.json"
+
+    def fake_evaluate_query(item, top_k=3, source_group_lookup=None):
+        return make_eval_result(
+            is_answerable=True,
+            expected_answerable=True,
+            source_hit=True,
+            source_evaluable=True,
+            acceptable_source_hit=True,
+            acceptable_source_evaluable=True,
+            source_group_hit=True,
+            source_group_evaluable=True,
+            mrr_at_k=1,
+            recall_at_k=1,
+            keyword_hit_count=1,
+            expected_keywords=["RAGHub"],
+        ) | {
+            "id": item["id"],
+            "query": item["query"],
+            "category": item["category"],
+            "difficulty": item["difficulty"],
+            "case_type": item["case_type"],
+            "note": "",
+        }
+
+    monkeypatch.setattr(run_eval, "evaluate_query", fake_evaluate_query)
+
+    report = run_eval.run_eval(queries_path=queries_path, output_path=output)
+
+    assert output.exists()
+    assert old_output.read_text(encoding="utf-8") == "old"
+    assert report["summary"]["all_cases"]["category_breakdown"]["api"]["total_queries"] == 1
