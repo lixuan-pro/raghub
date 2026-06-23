@@ -166,6 +166,39 @@ def test_build_summary_includes_category_and_difficulty_breakdowns():
     assert summary["difficulty_breakdown"]["basic"]["hybrid"]["average_score"] == 10
 
 
+def test_representative_cases_keep_category_and_difficulty():
+    results_by_mode = {
+        "vector": [
+            {
+                "id": "q001",
+                "query": "query",
+                "category": "api",
+                "difficulty": "hard",
+                "case_type": "in_corpus",
+                "review_score": 7,
+                "review_comment": "vector comment",
+            }
+        ],
+        "hybrid": [
+            {
+                "id": "q001",
+                "query": "query",
+                "category": "api",
+                "difficulty": "hard",
+                "case_type": "in_corpus",
+                "review_score": 9,
+                "review_comment": "hybrid comment",
+            }
+        ],
+    }
+    comparisons = ab_review.compare_vector_and_hybrid(results_by_mode)
+
+    cases = ab_review.representative_cases(results_by_mode, comparisons)
+
+    assert cases["hybrid_better"][0]["category"] == "api"
+    assert cases["hybrid_better"][0]["difficulty"] == "hard"
+
+
 def test_main_accepts_eval_100_output_aliases(monkeypatch, tmp_path):
     output_json = tmp_path / "llm_ab_review_100_results.json"
     output_md = tmp_path / "llm_ab_review_100.md"

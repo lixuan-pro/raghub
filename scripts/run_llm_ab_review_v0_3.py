@@ -456,8 +456,8 @@ def representative_cases(
         payload = {
             "id": query_id,
             "query": item["query"],
-            "category": item.get("category", "uncategorized"),
-            "difficulty": item.get("difficulty", "unknown"),
+            "category": vector_item.get("category", "uncategorized"),
+            "difficulty": vector_item.get("difficulty", "unknown"),
             "vector_score": item["vector_score"],
             "hybrid_score": item["hybrid_score"],
             "vector_comment": vector_item["review_comment"],

@@ -851,13 +851,14 @@ python scripts\chat_deepseek_demo.py
 
 ```text
 如果没有 retrieved_chunks -> no_retrieved_chunks
+如果 query 命中通用 out-of-scope intent -> query_out_of_project_scope:<category>
 如果 top_score < 0.2 -> retrieval_score_below_threshold
 否则 -> retrieval_evidence_found
 ```
 
 无检索结果或低相关检索结果时，`/chat` 会返回类似“当前知识库中没有找到足够依据回答该问题”的拒答文本。
 
-当前阈值 `0.2` 是 v0.2 的经验规则，只用于最小可解释 no-answer 策略。Day 20 起，no-answer 不只看检索分数，也会对手机号、联系方式、未来线上用户量等明显超出项目资料范围的问题做轻量 out-of-scope 防护。
+当前阈值 `0.2` 是 v0.2 的经验规则，只用于最小可解释 no-answer 策略。Day 20 起，no-answer 不只看检索分数；Eval-100 no-answer 修复进一步增加了通用 out-of-scope intent guard，覆盖作者隐私、真实密钥、未来预测、实时/内部业务数据和不受支持的外部知识请求。
 
 这仍不是生产级意图分类器或安全系统，只是为了降低明显 out-of-corpus 问题被误判为可回答的风险。
 
@@ -1066,6 +1067,8 @@ eval/llm_ab_review_100.md
 docs/eval_100_report.md
 ```
 
-Retrieval-only Eval-100 中，vector exact/acceptable/source_group/keyword 为 `0.59/0.80/0.91/0.64`，hybrid 为 `0.59/0.81/0.92/0.68`。DeepSeek A/B Eval-100 中，vector average_score 为 `8.03`，hybrid 为 `8.09`，winner 分布为 vector 17、hybrid 13、tie 70。
+Retrieval-only Eval-100 中，vector exact/acceptable/source_group/keyword 为 `0.59/0.80/0.91/0.64`，hybrid 为 `0.59/0.81/0.92/0.68`。Eval-100 初版暴露 out-of-corpus 拒答不足，default `/chat` 只拒答 `4/12`；本轮增加通用 out-of-scope intent guard 后，default `/chat` 拒答提升为 `12/12`，answerability accuracy 从 `0.91` 提升到 `0.99`。
 
-结论：Eval-100 比 20 条更能暴露真实边界。hybrid 在 retrieval coverage 和平均分上有小幅收益，但 exact source hit 未提升，out-of-corpus 拒答只有 `4/12`，因此不建议把 hybrid 设为默认检索模式。Eval-100 仍是项目级小型评测，不是生产级 benchmark。
+修复后 DeepSeek A/B Eval-100 中，vector average_score 为 `8.83`，hybrid 为 `8.90`，winner 分布为 vector 12、hybrid 12、tie 76；vector 和 hybrid 的 out-of-corpus 拒答均为 `12/12`。
+
+结论：Eval-100 比 20 条更能暴露真实边界。hybrid 在 retrieval coverage 和平均分上有小幅收益，但 exact source hit 未提升，因此不建议把 hybrid 设为默认检索模式。no-answer 修复目前仍是规则化 guard，不是完整意图识别器，也不是生产级安全拒答能力；后续可引入 LLM-based answerability judge 或轻量 classifier。

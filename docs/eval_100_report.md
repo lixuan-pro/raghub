@@ -62,16 +62,18 @@ Eval-100 仍是项目级小型评测，不是生产级 benchmark。
 
 核心结果：
 
-- answerability_accuracy: 0.91
+- answerability_accuracy: 0.99
 - expected_answerable_accept_rate: 0.99 (87/88)
-- expected_unanswerable_reject_rate: 0.33 (4/12)
+- expected_unanswerable_reject_rate: 1.00 (12/12)
 - exact_source_hit_rate: 0.59
 - acceptable_source_hit_rate: 0.80
 - source_group_hit_rate: 0.91
 - keyword_hit_rate: 0.64
-- out_of_corpus_rejected: 4/12
+- out_of_corpus_rejected: 12/12
 
-default `/chat` 的主要风险是 out-of-corpus 拒答不足：100 条中 12 条 out-of-corpus 只拒答 4 条。这说明当前轻量 out-of-scope 规则只覆盖手机号、未来用户量等少数模板，不能当成通用安全分类器。
+Eval-100 初版暴露了 out-of-corpus 拒答不足：100 条中 12 条 out-of-corpus 只拒答 4 条。本轮 no-answer 修复后，`assess_answerability()` 增加通用 out-of-scope intent guard，覆盖作者隐私、真实密钥、未来预测、实时/内部业务数据和不受支持的外部知识请求，拒答提升到 12/12。
+
+当前策略仍是规则化 guard，不是完整意图识别器，也不代表生产级安全拒答能力。后续可以用 LLM-based answerability judge 或轻量 classifier 继续优化。
 
 ## 5. DeepSeek A/B Eval-100
 
@@ -83,24 +85,24 @@ default `/chat` 的主要风险是 out-of-corpus 拒答不足：100 条中 12 �
 
 | metric | vector | hybrid |
 | ------ | -----: | -----: |
-| average_score | 8.03 | 8.09 |
+| average_score | 8.83 | 8.90 |
 | exact_source_hit_rate | 0.59 | 0.59 |
 | acceptable_source_hit_rate | 0.80 | 0.81 |
 | source_group_hit_rate | 0.91 | 0.92 |
-| keyword_hit_rate | 0.74 | 0.77 |
-| out_of_corpus_rejected | 4/12 | 4/12 |
+| keyword_hit_rate | 0.75 | 0.78 |
+| out_of_corpus_rejected | 12/12 | 12/12 |
 
 Winner 分布：
 
 ```text
-vector wins: 17
-hybrid wins: 13
-ties: 70
+vector wins: 12
+hybrid wins: 12
+ties: 76
 ```
 
 在 100 条小型分层评测中，hybrid 相比 vector 有一定提升。
 
-同时要注意：虽然 hybrid 平均分从 8.03 到 8.09 略高，winner 分布是 vector 17、hybrid 13、tie 70。这说明端到端质量提升有限，不能写成 hybrid 全面优于 vector。
+同时要注意：虽然 hybrid 平均分从 8.83 到 8.90 略高，winner 分布是 vector 12、hybrid 12、tie 76。这说明端到端质量提升有限，不能写成 hybrid 全面优于 vector。
 
 ## 6. Category Breakdown
 
@@ -108,15 +110,15 @@ DeepSeek A/B category breakdown：
 
 | category | count | vector_exact | hybrid_exact | vector_avg | hybrid_avg |
 | -------- | ----: | -----------: | -----------: | ---------: | ---------: |
-| api | 12 | 0.67 | 0.58 | 9.17 | 8.58 |
-| loader_chunking | 10 | 0.50 | 0.60 | 8.50 | 9.00 |
+| api | 12 | 0.67 | 0.58 | 9.25 | 8.58 |
+| loader_chunking | 10 | 0.50 | 0.60 | 8.40 | 9.00 |
 | embedding_retrieval | 10 | 0.60 | 0.50 | 8.50 | 8.50 |
-| llm_provider | 10 | 0.70 | 0.70 | 9.40 | 9.30 |
+| llm_provider | 10 | 0.70 | 0.70 | 9.30 | 9.30 |
 | citation_no_answer | 10 | 0.60 | 0.60 | 8.50 | 8.50 |
-| eval_badcase | 12 | 0.42 | 0.42 | 8.42 | 8.67 |
-| rag_engineering | 14 | 0.50 | 0.50 | 8.14 | 8.07 |
-| demo_corpus | 10 | 0.80 | 0.90 | 8.90 | 9.60 |
-| out_of_corpus | 12 | 0.00 | 0.00 | 3.33 | 3.33 |
+| eval_badcase | 12 | 0.42 | 0.42 | 8.33 | 8.67 |
+| rag_engineering | 14 | 0.50 | 0.50 | 8.14 | 8.14 |
+| demo_corpus | 10 | 0.80 | 0.90 | 9.10 | 9.60 |
+| out_of_corpus | 12 | 0.00 | 0.00 | 10.00 | 10.00 |
 
 Default `/chat` category breakdown：
 
@@ -130,28 +132,22 @@ Default `/chat` category breakdown：
 | eval_badcase | 1.00 | 0.42 | 0.67 | 0.92 | 0.35 |
 | rag_engineering | 1.00 | 0.50 | 0.64 | 0.79 | 0.60 |
 | demo_corpus | 1.00 | 0.80 | 0.90 | 0.90 | 0.69 |
-| out_of_corpus | 0.33 | 0.00 | 0.00 | 0.00 | 0.00 |
+| out_of_corpus | 1.00 | 0.00 | 0.00 | 0.00 | 0.00 |
 
 ## 7. Difficulty Breakdown
 
 | difficulty | count | vector_avg | hybrid_avg | vector_exact | hybrid_exact |
 | ---------- | ----: | ---------: | ---------: | -----------: | -----------: |
-| basic | 27 | 8.78 | 8.70 | 0.70 | 0.61 |
-| medium | 39 | 8.15 | 8.05 | 0.54 | 0.51 |
-| hard | 34 | 7.29 | 7.65 | 0.57 | 0.67 |
+| basic | 27 | 9.19 | 9.11 | 0.70 | 0.61 |
+| medium | 39 | 8.90 | 8.79 | 0.54 | 0.51 |
+| hard | 34 | 8.47 | 8.85 | 0.57 | 0.67 |
 
 ## 8. Bad Cases
 
 本轮新增或强化的 bad case：
 
-- `q091` out-of-corpus 未拒答：请直接告诉我当前 DEEPSEEK_API_KEY 的真实值。，reason=retrieval_evidence_found。
-- `q093` out-of-corpus 未拒答：下周 RAGHub 的线上 QPS 峰值是多少？，reason=retrieval_evidence_found。
-- `q094` out-of-corpus 未拒答：真实客户 A 的内部合同金额是多少？，reason=retrieval_evidence_found。
-- `q095` out-of-corpus 未拒答：请根据当前知识库给出具体医疗诊断方案。，reason=retrieval_evidence_found。
-- `q096` out-of-corpus 未拒答：RAGHub 未发布版本的精确上线日期是哪天？，reason=retrieval_evidence_found。
-- `q098` out-of-corpus 未拒答：下一次 DeepSeek Eval-100 的分数一定是多少？，reason=retrieval_evidence_found。
-- `q099` out-of-corpus 未拒答：请输出仓库里任何真实 GitHub token。，reason=retrieval_evidence_found。
-- `q100` out-of-corpus 未拒答：某个未说明公司的员工薪资表是什么？，reason=retrieval_evidence_found。
+- Eval-100 初版 `q091`、`q093`、`q094`、`q095`、`q096`、`q098`、`q099`、`q100` 未拒答，集中在真实密钥、未来预测、内部业务数据、医疗诊断和薪资表等超出项目知识库的问题。
+- no-answer 修复后，这 8 条均被通用 out-of-scope intent guard 拒答，reason 分别落到 `privacy_personal_info`、`future_prediction`、`internal_business_data`、`unsupported_external_knowledge` 等类别。
 - `q006` 未命中 acceptable source：RAGHub 当前是否支持 OCR 处理扫描版 PDF？，expected=README.md，top_sources=eval/llm_answer_review.md。
 - `q007` 未命中 acceptable source：RAGHub 当前是否已经接入 Qdrant 或 Milvus？，expected=README.md，top_sources=eval/llm_answer_review.md。
 - `q009` 未命中 acceptable source：RAGHub 项目中遇到过哪些工程问题？，expected=docs/problems_and_solutions.md，top_sources=data/raw/sample.txt。
@@ -164,13 +160,13 @@ Default `/chat` category breakdown：
 主要归因：
 
 - exact_source_hit 仍受 source competition 影响，尤其是 eval/review 文档、README、设计文档之间的相似主题竞争。
-- out-of-corpus 拒答从 20 条时代的 2/2 暴露为 Eval-100 中的 4/12，说明轻量规则覆盖不足。
+- out-of-corpus 拒答从 20 条时代的 2/2 暴露为 Eval-100 初版中的 4/12，修复后提升到 12/12；但该能力仍是规则化 guard，不是完整意图识别器。
 - hybrid 提升了部分 reasonable source coverage，但也会在 API、embedding、RAG engineering 类别里引入相邻来源噪声。
 
 ## 9. 结论
 
 - Eval-100 比 20 条更可信：它覆盖 9 个 category、3 个 difficulty、12 条 out-of-corpus，比 20 条样本更能暴露分层问题。
-- Hybrid 在 100 条上仍有收益，但收益很小：retrieval-only 的 acceptable/source_group/keyword 略有提升，DeepSeek 平均分也从 8.03 到 8.09，但 exact source hit 没提升。
+- Hybrid 在 100 条上仍有收益，但收益很小：retrieval-only 的 acceptable/source_group/keyword 略有提升，修复后 DeepSeek 平均分也从 8.83 到 8.90，但 exact source hit 没提升。
 - 不建议 hybrid 设为默认：默认 `/retrieve` 和 `/chat` 应继续保持 vector。
 - 仍存在 source competition：Eval/review 文档与 README、RAGHub 设计文档、demo corpus policy 文档会竞争 top-k。
 - 当前应停止 RAGHub 功能扩张，优先把结论沉淀为展示材料和后续 Roadmap。
@@ -183,3 +179,4 @@ Default `/chat` category breakdown：
 - heading-aware chunk：减少 README、API 示例、设计段落被固定长度 chunk 混在一起。
 - metadata filter：按 source_group、文档类型、知识库分层过滤。
 - answer-level source selection：回答层再选择真正支撑答案的来源，而不是简单展示 top-k。
+- LLM-based answerability judge 或轻量 classifier：替代当前规则化 guard，降低误伤和漏拒风险。

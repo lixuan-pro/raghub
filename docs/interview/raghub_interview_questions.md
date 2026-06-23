@@ -459,8 +459,22 @@ Eval-100 把问题集扩展到 100 条，覆盖 9 个类别、3 个难度和 12 
 
 ### 项目中的具体实现
 
-新增 `eval/results_100.json`、`eval/retrieval_comparison_100.json`、`eval/llm_ab_review_100_results.json`、`eval/llm_ab_review_100.md` 和 `docs/eval_100_report.md`。retrieval-only 中 hybrid 的 acceptable/source_group/keyword 略好于 vector，但 exact source hit 仍为 0.59；DeepSeek A/B 中 vector 平均分 8.03，hybrid 平均分 8.09，winner 分布为 vector 17、hybrid 13、tie 70。
+新增 `eval/results_100.json`、`eval/retrieval_comparison_100.json`、`eval/llm_ab_review_100_results.json`、`eval/llm_ab_review_100.md` 和 `docs/eval_100_report.md`。retrieval-only 中 hybrid 的 acceptable/source_group/keyword 略好于 vector，但 exact source hit 仍为 0.59；Eval-100 初版暴露 out-of-corpus 拒答只有 4/12，修复 no-answer guard 后 default `/chat` 提升到 12/12，answerability accuracy 从 0.91 提升到 0.99。修复后 DeepSeek A/B 中 vector 平均分 8.83，hybrid 平均分 8.90，winner 分布为 vector 12、hybrid 12、tie 76。
 
 ### 面试表达
 
-我不会把 Eval-100 包装成生产级 benchmark。更准确的说法是：它比 20 条更可信，能说明 hybrid 有小幅 coverage 收益，但也暴露 out-of-corpus 拒答不足和 source competition，所以当前仍不建议把 hybrid 设为默认。
+我不会把 Eval-100 包装成生产级 benchmark。更准确的说法是：它比 20 条更可信，能说明 hybrid 有小幅 coverage 收益，也暴露过 out-of-corpus 拒答不足和 source competition。no-answer 风险已经用规则化 guard 缓解，但当前仍不建议把 hybrid 设为默认。
+
+## Q：Eval-100 暴露的 no-answer 风险是怎么修的？
+
+### 回答要点
+
+Eval-100 初版中 12 条 out-of-corpus 只拒答 4 条，漏掉了真实密钥、未来 QPS、内部合同、医疗诊断、未发布上线日期、token 和薪资表等问题。我没有按 query id 写规则，而是在 answerability 判断前增加通用 out-of-scope intent guard。
+
+### 项目中的具体实现
+
+`app/services/rag_service.py` 新增 `classify_out_of_scope_query()`，按 `author_private_info`、`privacy_personal_info`、`future_prediction`、`real_time_external_fact`、`internal_business_data`、`unsupported_external_knowledge` 等类别返回拒答 reason。`assess_answerability()` 现在先处理空检索，再处理 out-of-scope intent，再看 retrieval score。no-answer 时不会调用 LLM。
+
+### 面试表达
+
+这个修复不是“彻底解决幻觉”，而是把明显越界的问题挡在生成前。修复后 default `/chat` 的 out-of-corpus 拒答从 4/12 到 12/12，DeepSeek A/B 中 vector 和 hybrid 也都是 12/12；但它仍是规则化 guard，后续可以用 LLM-based answerability judge 或轻量 classifier 改进。

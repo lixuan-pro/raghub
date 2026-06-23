@@ -160,17 +160,19 @@ reason=retrieval_evidence_found
 
 - query: q091-q100 中的 API key、身份证号、未来 QPS、真实客户合同、医疗诊断、未发布上线日期、住址、未来评测分数、token、薪资表等问题。
 - expected: 全部应拒答，`expected_answerable=false`。
-- actual: default `/chat` Eval-100 中 out-of-corpus rejected 为 `4/12`；DeepSeek A/B 中 vector 和 hybrid 都是 `4/12`。
+- actual_before_fix: default `/chat` Eval-100 中 out-of-corpus rejected 为 `4/12`；DeepSeek A/B 中 vector 和 hybrid 都是 `4/12`。
+- actual_after_fix: 增加通用 out-of-scope intent guard 后，default `/chat` Eval-100 的 out-of-corpus rejected 提升为 `12/12`；DeepSeek A/B 中 vector 和 hybrid 也都是 `12/12`。
 - problem_type: out_of_corpus_rejection_gap
-- root_cause: 当前 out-of-scope 防护是轻量规则，能覆盖手机号、未来用户量等少数模板，但不能覆盖所有隐私、未来数据、外部业务数据和高风险请求。
-- current_status: 不把 Eval-100 的 answerability accuracy 包装成生产安全能力。该问题应作为下一轮 no-answer 分类和安全边界改进的首要 bad case。
-- next_fix: 引入更系统的 query scope classifier、source_type filter、answerability eval 扩展，或者在 `/chat` 前增加更严格的项目资料范围判断。
+- root_cause: 初版 out-of-scope 防护是轻量关键词规则，能覆盖手机号、未来用户量等少数模板，但不能覆盖真实密钥、未来 QPS、内部合同、医疗诊断、未发布上线日期、token 和薪资表等更泛化的高风险请求。
+- fix: 在 `app/services/rag_service.py` 中新增 `classify_out_of_scope_query()`，按 `author_private_info`、`privacy_personal_info`、`future_prediction`、`real_time_external_fact`、`internal_business_data`、`unsupported_external_knowledge` 等通用类别拒答，不按 query id 写规则。
+- current_status: 已缓解 Eval-100 暴露的明显 out-of-corpus 漏拒，但当前策略仍是规则化 guard，不是完整意图识别器，也不代表生产级安全拒答能力。
+- next_fix: 引入 LLM-based answerability judge、轻量 query classifier、source_type filter 或更系统的 answerability eval，降低规则漏拒和误伤风险。
 
 ## CASE-012：Eval-100 hybrid 收益有限且不适合作为默认
 
 - query: 100 条 Eval-100 分层问题。
 - expected: 验证 hybrid 在更大样本上是否稳定优于 vector。
-- actual: retrieval-only 中 hybrid acceptable/source_group/keyword 略高于 vector，但 exact source hit 与 vector 同为 `0.59`。DeepSeek A/B 中 vector 平均分 `8.03`，hybrid 平均分 `8.09`，winner 分布为 vector `17`、hybrid `13`、ties `70`。
+- actual: retrieval-only 中 hybrid acceptable/source_group/keyword 略高于 vector，但 exact source hit 与 vector 同为 `0.59`。no-answer 修复后 DeepSeek A/B 中 vector 平均分 `8.83`，hybrid 平均分 `8.90`，winner 分布为 vector `12`、hybrid `12`、ties `76`。
 - problem_type: hybrid_eval_100_gain_is_limited
 - root_cause: hybrid 能带来更多相关上下文，但固定长度 chunk、eval/review 文档竞争和相似主题 source competition 仍存在；部分类别中 hybrid 也会引入噪声。
 - current_status: 保持默认 `RETRIEVER_PROVIDER=vector`，hybrid 仍作为实验模式保留。

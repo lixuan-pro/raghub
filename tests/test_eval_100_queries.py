@@ -2,6 +2,8 @@ import json
 from collections import Counter, defaultdict
 from pathlib import Path
 
+from app.services.rag_service import classify_out_of_scope_query
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 QUERIES_PATH = PROJECT_ROOT / "eval" / "queries.jsonl"
@@ -77,3 +79,21 @@ def test_eval_100_in_corpus_schema_has_grounding_labels():
         assert isinstance(item["expected_source_group"], str)
         assert item["expected_source_group"]
         assert item["expected_keywords"]
+
+
+def test_eval_100_out_of_corpus_queries_are_covered_by_generic_guard():
+    queries = load_queries()
+
+    for item in queries:
+        if item["case_type"] == "out_of_corpus":
+            assert classify_out_of_scope_query(item["query"]) is not None
+
+
+def test_eval_100_documented_api_key_and_provider_topics_are_not_guarded():
+    queries = load_queries()
+    safe_query_ids = {"q018", "q047", "q050", "q052"}
+
+    for item in queries:
+        if item["id"] in safe_query_ids:
+            assert item["case_type"] == "in_corpus"
+            assert classify_out_of_scope_query(item["query"]) is None
