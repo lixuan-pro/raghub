@@ -158,16 +158,41 @@ reason=retrieval_evidence_found
 
 ## CASE-011：Eval-100 暴露 out-of-corpus 拒答不足
 
-- query: q091-q100 中的 API key、身份证号、未来 QPS、真实客户合同、医疗诊断、未发布上线日期、住址、未来评测分数、token、薪资表等问题。
-- expected: 全部应拒答，`expected_answerable=false`。
-- actual_before_fix: default `/chat` Eval-100 中 out-of-corpus rejected 为 `4/12`；DeepSeek A/B 中 vector 和 hybrid 都是 `4/12`。
-- actual_after_fix: 增加通用 out-of-scope intent guard 后，default `/chat` Eval-100 的 out-of-corpus rejected 提升为 `12/12`；DeepSeek A/B 中 vector 和 hybrid 也都是 `12/12`。
-- problem_type: out_of_corpus_rejection_gap
-- root_cause: 初版 out-of-scope 防护是轻量关键词规则，能覆盖手机号、未来用户量等少数模板，但不能覆盖真实密钥、未来 QPS、内部合同、医疗诊断、未发布上线日期、token 和薪资表等更泛化的高风险请求。
-- fix: 在 `app/services/rag_service.py` 中新增 `classify_out_of_scope_query()`，按 `author_private_info`、`privacy_personal_info`、`future_prediction`、`real_time_external_fact`、`internal_business_data`、`unsupported_external_knowledge` 等通用类别拒答，不按 query id 写规则。
-- current_status: 已缓解 Eval-100 暴露的明显 out-of-corpus 漏拒，但当前策略仍是规则化 guard，不是完整意图识别器，也不代表生产级安全拒答能力。
-- next_fix: 引入 LLM-based answerability judge、轻量 query classifier、source_type filter 或更系统的 answerability eval，降低规则漏拒和误伤风险。
+- problem: Eval-100 初版中，12 条 out-of-corpus 只有 4 条被 default `/chat` 正确拒答，`out_of_corpus_rejected=4/12`。
+- failure_type: no-answer / answerability guard 覆盖不足。
 
+### Failed queries 类型
+
+- API key / token 真实值。
+- 未来预测，例如未来 QPS、未来评测分数、未发布上线日期。
+- 内部业务数据，例如真实客户合同、薪资表。
+- 医疗诊断等不受当前项目知识库支持的外部专业问题。
+- 未发布信息和个人隐私信息。
+
+### Root cause
+
+原有 out-of-scope 规则覆盖不足，只能覆盖少量明显模板。仅靠少量关键词不能覆盖复杂越界意图，尤其是真实密钥、内部业务数据、医疗诊断和未发布信息等请求。
+
+### Fix
+
+- 新增 `classify_out_of_scope_query()`，按 `author_private_info`、`privacy_personal_info`、`future_prediction`、`real_time_external_fact`、`internal_business_data`、`unsupported_external_knowledge` 等通用类别识别明显越界意图。
+- 在 `assess_answerability()` 中优先进行 out-of-scope intent guard，再进入 retrieval score 阈值判断。
+- 不按 query id 写特例规则，避免把 Eval-100 样本硬编码进业务逻辑。
+
+### Result
+
+- `out_of_corpus_rejected`: 4/12 -> 12/12
+- `answerability_accuracy`: 0.91 -> 0.99
+- `expected_answerable_accept_rate`: 0.9886
+- `expected_unanswerable_reject_rate`: 1.00
+
+### Boundary
+
+这是规则化 guard，不是完整意图识别器，也不是生产级安全系统。它能降低明显 out-of-corpus 问题被误判为可回答的风险，但不能替代更系统的 answerability judge、权限控制、内容安全策略或人工评审。
+
+### Next fix
+
+后续可引入 LLM-based answerability judge、轻量 query classifier、source_type filter 或更系统的 answerability eval，降低规则漏拒和误伤风险。
 ## CASE-012：Eval-100 hybrid 收益有限且不适合作为默认
 
 - query: 100 条 Eval-100 分层问题。

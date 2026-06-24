@@ -1055,20 +1055,12 @@ python -m pytest
 
 这些内容会在后续阶段按优先级逐步评估，不属于当前 v0.2 已完成能力。
 
-## Eval-100 可信度补强
+## Eval-100 与质量边界
 
-feature/eval-100 将 `eval/queries.jsonl` 从 20 条扩展到 100 条，覆盖 API、loader/chunking、embedding/retrieval、LLM provider、citation/no-answer、eval/badcase、RAG engineering、demo corpus 和 out-of-corpus。输出文件不覆盖旧 v0.2/v0.3-lite 结果：
+`feature/eval-100` 是评测增强与 no-answer 修复分支，不改变默认 `/retrieve` 和 `/chat` 的 vector 检索链路，也不默认启用 hybrid。
 
-```text
-eval/results_100.json
-eval/retrieval_comparison_100.json
-eval/llm_ab_review_100_results.json
-eval/llm_ab_review_100.md
-docs/eval_100_report.md
-```
+本轮 `eval/queries.jsonl` 扩展到 100 条，其中 88 条为 in-corpus，12 条为 out-of-corpus。Default `/chat` Eval-100 最终结果：`answerability_accuracy=0.99`，`out_of_corpus_rejected=12/12`，`exact_source_hit_rate=0.5909`，`acceptable_source_hit_rate=0.7955`，`source_group_hit_rate=0.9091`，`keyword_hit_rate=0.6414`。
 
-Retrieval-only Eval-100 中，vector exact/acceptable/source_group/keyword 为 `0.59/0.80/0.91/0.64`，hybrid 为 `0.59/0.81/0.92/0.68`。Eval-100 初版暴露 out-of-corpus 拒答不足，default `/chat` 只拒答 `4/12`；本轮增加通用 out-of-scope intent guard 后，default `/chat` 拒答提升为 `12/12`，answerability accuracy 从 `0.91` 提升到 `0.99`。
+DeepSeek A/B 中，hybrid average_score 为 `8.90`，vector 为 `8.83`；winner 分布为 vector wins `12`、hybrid wins `12`、ties `76`。这说明 hybrid 有轻微收益，但优势很小，不能写成全面优于 vector。当前默认仍保留 vector，hybrid 作为实验 provider 保留。
 
-修复后 DeepSeek A/B Eval-100 中，vector average_score 为 `8.83`，hybrid 为 `8.90`，winner 分布为 vector 12、hybrid 12、tie 76；vector 和 hybrid 的 out-of-corpus 拒答均为 `12/12`。
-
-结论：Eval-100 比 20 条更能暴露真实边界。hybrid 在 retrieval coverage 和平均分上有小幅收益，但 exact source hit 未提升，因此不建议把 hybrid 设为默认检索模式。no-answer 修复目前仍是规则化 guard，不是完整意图识别器，也不是生产级安全拒答能力；后续可引入 LLM-based answerability judge 或轻量 classifier。
+Eval-100 比原 20 条 eval 更能暴露 source competition 和 out-of-corpus 拒答问题，但仍是项目级小型评测，不是生产级 benchmark。完整记录见 `docs/eval_100_report.md`、`eval/bad_cases.md` 和 `docs/problems_and_solutions.md`。

@@ -151,3 +151,67 @@ RAGHub 早期数据集只有 sample TXT/PDF 生成的少量 chunks，目标是�
 ### 面试表达版本
 
 我没有一开始就引入向量数据库，而是先用 numpy 内存检索打通 RAG 主链路。这样能更快验证 chunk、embedding、召回和 API 设计，后续再替换为 Qdrant 或 pgvector。
+
+## 问题 6：source competition 导致 exact source hit 不高
+
+### 背景
+
+索引扩展到 254 chunks 后，README、scope 文档、eval/review 文档、bad case 文档、RAG 工程知识库和 demo corpus 都进入同一个检索空间。
+
+### 现象
+
+Eval-100 中 exact source hit 不高，default `/chat` 的 `exact_source_hit_rate=0.5909`，retrieval-only vector 为 `0.5909`，hybrid 仍为 `0.5909`，hybrid_rerank 为 `0.6023`。
+
+### 定位
+
+问题主要来自语义相关文档竞争。比如 eval/review/bad_case 文档会复述 README 或设计文档中的能力边界，导致 top-k 命中语义相近但不是最直接 expected_source 的片段。
+
+### 尝试
+
+本轮比较了 BM25、hybrid 和 hybrid_rerank，并把指标拆成 exact / acceptable / source_group / keyword / MRR@k / Recall@k，而不是只看单一 source hit。
+
+### 结果
+
+hybrid 对 acceptable/source_group/keyword 有轻微提升：acceptable 从 vector `0.7955` 到 hybrid `0.8068`，source_group 从 `0.9091` 到 `0.9205`，keyword 从 `0.6391` 到 `0.6805`。但 exact 提升有限，hybrid 与 vector 同为 `0.5909`。
+
+### 结论
+
+不默认启用 hybrid。当前问题不是继续调 fusion 权重就能稳定解决，默认 vector 更简单、可解释，也避免改变既有 `/retrieve` 和 `/chat` 行为。
+
+### 后续
+
+优先考虑 source_type filter、heading-aware chunk、metadata filter 和 answer-level source selection，而不是继续调 hybrid 参数。
+
+### 工程结论
+
+该 case 说明，语料扩展后问题不只是“是否能召回资料”，还包括“是否命中最直接来源”。当前处理方式是把命中拆成 exact、acceptable 和 source_group 三层，验证 hybrid 是否改善最直接来源。结果显示 hybrid 有轻微 coverage 收益，但 exact 改善有限，因此不设为默认。
+
+## 问题 7：Eval-100 no-answer 失败
+
+### 背景
+
+原来的 eval 只有 20 条，out-of-corpus 样本较少。Eval-100 扩展到 100 条后，单独保留 12 条 out-of-corpus 风险问题。
+
+### 现象
+
+修复前 default `/chat` 的 `out_of_corpus_rejected` 只有 4/12，`answerability_accuracy=0.91`。
+
+### 定位
+
+复杂越界意图没有被原规则覆盖，尤其是真实 API key/token、未来预测、内部业务数据、医疗诊断和未发布信息。仅靠少量关键词不足以覆盖这些问题。
+
+### 修复
+
+新增 `classify_out_of_scope_query()`，把明显越界问题归类为作者隐私、个人/密钥信息、未来预测、实时外部事实、内部业务数据、不受支持的外部知识等类型，并在 `assess_answerability()` 中优先执行该 guard。
+
+### 结果
+
+修复后 out-of-corpus 拒答为 12/12，`answerability_accuracy=0.99`，`expected_answerable_accept_rate=0.9886`，`expected_unanswerable_reject_rate=1.00`。
+
+### 边界
+
+这是规则化 guard，不是完整意图识别器，也不是生产级安全系统。它适合当前项目的明显越界问题防护，但不能替代权限、审计、内容安全和更系统的 answerability judge。
+
+### 工程结论
+
+该 case 说明，Eval-100 能暴露 20 条小样本不容易覆盖的 no-answer 漏拒。修复方式是将明显越界意图收敛为通用分类 guard，并用同一批数据验证 4/12 到 12/12 的闭环。这体现的是评测驱动的工程修复，而不是继续堆功能。
