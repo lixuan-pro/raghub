@@ -141,7 +141,7 @@ RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。
 - Agent 或工具调用
 - Qdrant / Milvus / pgvector
 - 默认链路不启用 BM25 / hybrid retrieval / rerank；这些能力仅作为 v0.3-lite 实验模式保留
-- Docker 部署
+- 生产级 Docker / Nginx / Redis / Celery / Kubernetes 部署
 - 多租户、权限和生产级并发能力
 
 ## 后续规划
@@ -152,7 +152,7 @@ RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。
 - 接入 Qdrant 或 pgvector
 - 将更多业务文档纳入索引
 - 扩展 eval 问题集和失败案例分析
-- 增加 Docker 部署
+- 完善最小 Docker demo 文档与镜像体积控制
 
 ## 当前实现明细
 
@@ -375,6 +375,50 @@ http://127.0.0.1:8000/version
 ```json
 {"version":"0.1.0"}
 ```
+
+---
+
+## Docker Quick Start
+
+RAGHub 提供一个最小 Docker 运行方式，用于本地演示和项目展示。
+
+### Build
+
+```bash
+docker build -t raghub .
+```
+
+### Run
+
+```bash
+docker run --rm -p 8000:8000 raghub
+```
+
+启动后访问：
+
+```text
+http://localhost:8000/docs
+```
+
+默认使用：
+
+```text
+LLM_PROVIDER=mock
+```
+
+如需本地演示 DeepSeek provider，可在本机通过环境变量传入，不要把真实 API key 写入仓库：
+
+```powershell
+docker run --rm -p 8000:8000 -e LLM_PROVIDER=deepseek -e DEEPSEEK_API_KEY=你的key raghub
+```
+
+### Notes
+
+- 当前 Docker 配置用于本地 demo，不代表生产级部署。
+- 镜像默认读取 `data/processed` 下已经生成的 chunk 和 embedding 文件。
+- 如果环境中首次加载 embedding 模型，可能需要下载模型或配置本地缓存。
+- 当前未接入 Qdrant / Milvus / pgvector 等外部向量数据库。
+- 当前未包含 Nginx、Redis、Celery、Kubernetes 等生产部署组件。
 
 ---
 
@@ -1051,7 +1095,7 @@ python -m pytest
 - 默认检索链路不启用 BM25 / hybrid retrieval / rerank
 - 生产级真实 LLM RAG 问答接口
 - 前端页面
-- Docker 部署
+- 生产级 Docker / Nginx / Redis / Celery / Kubernetes 部署
 
 这些内容会在后续阶段按优先级逐步评估，不属于当前 v0.2 已完成能力。
 
