@@ -1,0 +1,11 @@
+{
+  "embedding_path": "data/processed/chunk_embeddings.npy",
+  "chunks_path": "data/processed/chunks_preview.jsonl",
+  "embedding_meta_path": "data/processed/chunk_embeddings_meta.json",
+  "index_path": "data/processed/faiss.index",
+  "num_vectors": 254,
+  "dimension": 768,
+  "index_type": "IndexFlatIP",
+  "normalized": true,
+  "model_name": "BAAI/bge-base-zh-v1.5"
+}
