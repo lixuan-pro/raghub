@@ -1,6 +1,7 @@
 import os
 
 from app.retrievers.bm25_retriever import BM25Retriever
+from app.retrievers.faiss_retriever import FAISSRetriever
 from app.retrievers.hybrid_retriever import HybridRetriever
 from app.retrievers.vector_retriever import VectorRetriever
 
@@ -20,6 +21,8 @@ def build_retriever(provider: str | None = None):
         return VectorRetriever()
     if selected_provider == "bm25":
         return BM25Retriever()
+    if selected_provider == "faiss":
+        return FAISSRetriever()
     if selected_provider == "hybrid":
         return HybridRetriever(use_rerank=False)
     if selected_provider == "hybrid_rerank":

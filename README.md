@@ -11,6 +11,7 @@ RAGHub 是一个面向本地文档的轻量级 RAG 应用后端系统，用于�
 - 固定长度 + overlap 文本切块
 - 本地 embedding baseline
 - 内存版向量相似度检索
+- 可选 FAISS 本地向量索引检索 provider
 - `POST /retrieve` 检索 API
 - `POST /chat` 最小 RAG API
 - mock LLM client
@@ -59,6 +60,54 @@ python scripts\run_retrieval_eval.py
 uvicorn app.main:app --reload
 ```
 
+## Optional FAISS Retriever
+
+RAGHub 默认使用 numpy vector retriever，便于理解和测试。为了增强检索后端可扩展性，项目新增 FAISS retriever 作为可选 provider。
+
+### Build FAISS Index
+
+```bash
+python scripts/build_faiss_index.py
+```
+
+该脚本读取 `data/processed/chunk_embeddings.npy` 与 `data/processed/chunks_preview.jsonl`，并根据 `data/processed/chunk_embeddings_meta.json` 中的 `normalized` 字段选择 index 类型。当前 embedding 已归一化，因此使用 `IndexFlatIP`，score 表示归一化向量内积，语义上与 cosine similarity baseline 对齐。
+
+输出文件：
+
+```text
+data/processed/faiss.index
+data/processed/faiss_meta.json
+```
+
+### Run FAISS Demo
+
+```bash
+python scripts/retrieve_faiss_demo.py
+python scripts/compare_vector_faiss_demo.py
+```
+
+### Use FAISS Provider
+
+Windows / PowerShell：
+
+```powershell
+$env:RETRIEVER_PROVIDER="faiss"
+```
+
+Linux / macOS：
+
+```bash
+export RETRIEVER_PROVIDER=faiss
+```
+
+说明：
+
+- 默认主链路仍保留 `RETRIEVER_PROVIDER=vector`。
+- FAISS 当前作为本地检索后端增强，不代表生产级向量数据库。
+- FAISS 与 vector 使用同一批 chunk embeddings，主要差异在索引与检索后端。
+- 当前未接入 Chroma / Qdrant / Milvus / pgvector。
+- 如果 `faiss.index` 不存在，请先运行 `python scripts/build_faiss_index.py`。
+
 ## API 示例
 
 `POST /retrieve`
@@ -106,16 +155,21 @@ Day 22B 已基于 254 chunks 当前索引，对 `eval/queries.jsonl` 中 20 条 
 
 Day 20 已在 eval 中加入 `expected_answerable`，并为 `/chat` 增加轻量 out-of-scope 防护，用于降低明显 out-of-corpus 问题被误判为可回答的风险。
 
+## Retriever comparison / 检索对比
+
 v0.3-lite 新增 retrieval-only 对比实验，不调用 LLM，不覆盖 `eval/results.json`，输出到 `eval/retrieval_comparison.json`。当前结果如下：
 
 | mode | exact_source_hit_rate | acceptable_source_hit_rate | source_group_hit_rate | keyword_hit_rate | MRR@k | Recall@k |
 | ---- | --------------------: | -------------------------: | --------------------: | ---------------: | ----: | -------: |
-| vector | 0.61 | 0.78 | 0.78 | 0.72 | 0.69 | 0.78 |
-| bm25 | 0.44 | 0.61 | 0.61 | 0.77 | 0.48 | 0.61 |
-| hybrid | 0.61 | 0.83 | 0.83 | 0.80 | 0.63 | 0.83 |
-| hybrid_rerank | 0.61 | 0.83 | 0.83 | 0.80 | 0.63 | 0.83 |
+| vector | 0.59 | 0.80 | 0.91 | 0.64 | 0.66 | 0.80 |
+| bm25 | 0.44 | 0.69 | 0.83 | 0.67 | 0.57 | 0.69 |
+| hybrid | 0.59 | 0.81 | 0.92 | 0.68 | 0.66 | 0.81 |
+| hybrid_rerank | 0.60 | 0.81 | 0.92 | 0.68 | 0.66 | 0.81 |
+| faiss | 0.59 | 0.80 | 0.91 | 0.64 | 0.66 | 0.80 |
 
-结论：hybrid 提高了 acceptable source hit、source_group hit 和 keyword hit，但没有提高 exact source hit；lightweight rerank 在当前配置下没有带来额外指标收益，因此当前不建议设为默认检索模式。完整实验记录见 `docs/retrieval_quality_optimization.md`。
+结论：hybrid 提高了 acceptable source hit、source_group hit 和 keyword hit；lightweight rerank 在当前配置下只有极小 exact source hit 差异，因此当前不建议设为默认检索模式。FAISS 与 vector 使用同一批归一化 embeddings，本轮结果一致，说明它是可选索引后端增强，不是检索质量口径变化。完整实验记录见 `docs/retrieval_quality_optimization.md`。
+
+FAISS index 构建后，`scripts/run_retrieval_eval.py` 的 retrieval-only 对比项包含 `vector`、`bm25`、`hybrid`、`hybrid_rerank` 和 `faiss`。FAISS 与 vector 使用同一批归一化 embeddings，结果接近是合理现象；这里比较的是索引后端，不是生产级准确率证明。
 
 v0.3-lite 进一步新增 DeepSeek end-to-end A/B review，使用现有 `/chat` 链路，对同一批 20 条 eval query 比较 vector 与 hybrid。评分为轻量规则化 review，不是 LLM-as-judge，也不是生产级准确率证明。结果输出到 `eval/llm_ab_review_v0_3_results.json` 和 `eval/llm_ab_review_v0_3.md`：
 
@@ -140,8 +194,9 @@ RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。
 - streaming / SSE
 - Agent 或工具调用
 - Qdrant / Milvus / pgvector
+- FAISS 仅作为本地 index provider，不是完整向量数据库
 - 默认链路不启用 BM25 / hybrid retrieval / rerank；这些能力仅作为 v0.3-lite 实验模式保留
-- Docker 部署
+- 生产级 Docker / Nginx / Redis / Celery / Kubernetes 部署
 - 多租户、权限和生产级并发能力
 
 ## 后续规划
@@ -152,7 +207,7 @@ RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。
 - 接入 Qdrant 或 pgvector
 - 将更多业务文档纳入索引
 - 扩展 eval 问题集和失败案例分析
-- 增加 Docker 部署
+- 完善最小 Docker demo 文档与镜像体积控制
 
 ## 当前实现明细
 
@@ -174,7 +229,7 @@ RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。
 → eval / bad cases / LLM answer review
 ```
 
-当前默认链路仍使用内存版向量检索，尚未接入 Qdrant / Milvus / pgvector。v0.3-lite 分支中新增了 BM25、hybrid retrieval 和 lightweight rerank 的 retrieval-only 对比实验，但默认 `/retrieve` 和 `/chat` 仍保持 vector 行为。
+当前默认链路仍使用内存版向量检索，尚未接入 Qdrant / Milvus / pgvector。v0.3-lite 分支中新增了 BM25、hybrid retrieval 和 lightweight rerank 的 retrieval-only 对比实验，本轮新增 FAISS 作为可选本地 index provider，但默认 `/retrieve` 和 `/chat` 仍保持 vector 行为。
 
 ---
 
@@ -212,12 +267,17 @@ RAGHub v0.2 是学习型和求职展示型项目，不是生产级 RAG 平台。
 - `data/processed/chunk_embeddings.npy` chunk 向量矩阵
 - `data/processed/chunk_embeddings_meta.json` embedding 元信息文件
 - `app/retrievers/vector_retriever.py` 内存版向量相似度检索模块
+- `app/retrievers/faiss_retriever.py` 可选 FAISS 本地向量索引检索模块
 - `app/retrievers/bm25_retriever.py` v0.3-lite 轻量 BM25 检索实验模块
 - `app/retrievers/hybrid_retriever.py` v0.3-lite hybrid fusion 与 lightweight rerank 实验模块
+- `scripts/build_faiss_index.py` FAISS index 构建脚本
+- `scripts/retrieve_faiss_demo.py` FAISS 检索 demo 脚本
+- `scripts/compare_vector_faiss_demo.py` vector 与 FAISS 同 query 对比 demo
 - `scripts/retrieve_demo.py` 最小检索 demo 脚本
 - `scripts/run_retrieval_eval.py` v0.3-lite retrieval-only 对比实验脚本
 - `scripts/run_llm_ab_review_v0_3.py` v0.3-lite DeepSeek vector/hybrid A/B review 脚本
 - `tests/test_vector_retriever.py` 向量相似度测试
+- `tests/test_faiss_retriever.py` FAISS index 构建、加载和 provider 选择测试
 - `eval/queries.jsonl` 最小 RAG eval 样例，包含 `in_corpus` 与 `out_of_corpus`
 - `eval/results.json` eval 运行结果
 - `eval/llm_ab_review_v0_3_results.json` v0.3-lite DeepSeek A/B review 结构化结果
@@ -260,7 +320,10 @@ raghub/
 │  │  └─ local_embedder.py
 │  └─ retrievers/
 │     ├─ __init__.py
-│     └─ vector_retriever.py
+│     ├─ vector_retriever.py
+│     ├─ faiss_retriever.py
+│     ├─ bm25_retriever.py
+│     └─ hybrid_retriever.py
 ├─ data/
 │  ├─ raw/
 │  │  ├─ sample.txt
@@ -268,14 +331,17 @@ raghub/
 │  └─ processed/
 │     ├─ chunks_preview.jsonl
 │     ├─ chunk_embeddings.npy
-│     └─ chunk_embeddings_meta.json
+│     ├─ chunk_embeddings_meta.json
+│     ├─ faiss.index
+│     └─ faiss_meta.json
 ├─ tests/
 │  ├─ test_health.py
 │  ├─ test_txt_loader.py
 │  ├─ test_pdf_loader.py
 │  ├─ test_document_loaders.py
 │  ├─ test_text_chunker.py
-│  └─ test_vector_retriever.py
+│  ├─ test_vector_retriever.py
+│  └─ test_faiss_retriever.py
 ├─ docs/
 │  ├─ design/
 │  │  ├─ preprocessing_pipeline.md
@@ -292,7 +358,10 @@ raghub/
 ├─ scripts/
 │  ├─ build_chunks_demo.py
 │  ├─ build_embeddings_demo.py
-│  └─ retrieve_demo.py
+│  ├─ build_faiss_index.py
+│  ├─ retrieve_demo.py
+│  ├─ retrieve_faiss_demo.py
+│  └─ compare_vector_faiss_demo.py
 ├─ .env.example
 ├─ .gitignore
 ├─ README.md
@@ -333,6 +402,7 @@ DEBUG=true
 HOST=127.0.0.1
 PORT=8000
 LOG_LEVEL=INFO
+RETRIEVER_PROVIDER=vector
 ```
 
 Windows / PowerShell：
@@ -375,6 +445,50 @@ http://127.0.0.1:8000/version
 ```json
 {"version":"0.1.0"}
 ```
+
+---
+
+## Docker Quick Start
+
+RAGHub 提供一个最小 Docker 运行方式，用于本地演示和项目展示。
+
+### Build
+
+```bash
+docker build -t raghub .
+```
+
+### Run
+
+```bash
+docker run --rm -p 8000:8000 raghub
+```
+
+启动后访问：
+
+```text
+http://localhost:8000/docs
+```
+
+默认使用：
+
+```text
+LLM_PROVIDER=mock
+```
+
+如需本地演示 DeepSeek provider，可在本机通过环境变量传入，不要把真实 API key 写入仓库：
+
+```powershell
+docker run --rm -p 8000:8000 -e LLM_PROVIDER=deepseek -e DEEPSEEK_API_KEY=你的key raghub
+```
+
+### Notes
+
+- 当前 Docker 配置用于本地 demo，不代表生产级部署。
+- 镜像默认读取 `data/processed` 下已经生成的 chunk 和 embedding 文件。
+- 如果环境中首次加载 embedding 模型，可能需要下载模型或配置本地缓存。
+- 当前未接入 Chroma / Qdrant / Milvus / pgvector 等外部向量数据库。
+- 当前未包含 Nginx、Redis、Celery、Kubernetes 等生产部署组件。
 
 ---
 
@@ -1034,7 +1148,7 @@ python -m pytest
 
 ---
 
-## 当前边界
+## 当前边界 / 非生产级边界说明
 
 当前项目仍是学习型与求职展示型工程项目，不承诺生产级能力。
 
@@ -1051,7 +1165,7 @@ python -m pytest
 - 默认检索链路不启用 BM25 / hybrid retrieval / rerank
 - 生产级真实 LLM RAG 问答接口
 - 前端页面
-- Docker 部署
+- 生产级 Docker / Nginx / Redis / Celery / Kubernetes 部署
 
 这些内容会在后续阶段按优先级逐步评估，不属于当前 v0.2 已完成能力。
 
