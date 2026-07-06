@@ -9,6 +9,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(PROJECT_ROOT))
 
 from app.retrievers.bm25_retriever import BM25Retriever
+from app.retrievers.faiss_retriever import FAISSRetriever
 from app.retrievers.hybrid_retriever import (
     DEFAULT_BM25_TOP_N,
     DEFAULT_VECTOR_TOP_N,
@@ -236,11 +237,19 @@ def build_retrievers(
 ) -> dict[str, Any]:
     query_texts = [item["query"] for item in queries]
     vector_retriever = VectorRetriever()
+    faiss_retriever = FAISSRetriever()
     bm25_retriever = BM25Retriever()
     vector_results_by_query = {
         query: vector_retriever.search(
             query=query,
             top_k=max(top_k, DEFAULT_VECTOR_TOP_N),
+        )
+        for query in query_texts
+    }
+    faiss_results_by_query = {
+        query: faiss_retriever.search(
+            query=query,
+            top_k=top_k,
         )
         for query in query_texts
     }
@@ -267,6 +276,7 @@ def build_retrievers(
             bm25_retriever=cached_bm25_retriever,
             use_rerank=True,
         ),
+        "faiss": CachedRetriever(faiss_results_by_query),
     }
 
 
