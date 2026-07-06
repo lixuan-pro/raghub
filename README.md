@@ -155,6 +155,8 @@ Day 22B 已基于 254 chunks 当前索引，对 `eval/queries.jsonl` 中 20 条 
 
 Day 20 已在 eval 中加入 `expected_answerable`，并为 `/chat` 增加轻量 out-of-scope 防护，用于降低明显 out-of-corpus 问题被误判为可回答的风险。
 
+## Retriever comparison / 检索对比
+
 v0.3-lite 新增 retrieval-only 对比实验，不调用 LLM，不覆盖 `eval/results.json`，输出到 `eval/retrieval_comparison.json`。当前结果如下：
 
 | mode | exact_source_hit_rate | acceptable_source_hit_rate | source_group_hit_rate | keyword_hit_rate | MRR@k | Recall@k |
@@ -485,7 +487,7 @@ docker run --rm -p 8000:8000 -e LLM_PROVIDER=deepseek -e DEEPSEEK_API_KEY=你的
 - 当前 Docker 配置用于本地 demo，不代表生产级部署。
 - 镜像默认读取 `data/processed` 下已经生成的 chunk 和 embedding 文件。
 - 如果环境中首次加载 embedding 模型，可能需要下载模型或配置本地缓存。
-- 当前未接入 Qdrant / Milvus / pgvector 等外部向量数据库。
+- 当前未接入 Chroma / Qdrant / Milvus / pgvector 等外部向量数据库。
 - 当前未包含 Nginx、Redis、Celery、Kubernetes 等生产部署组件。
 
 ---
@@ -1146,7 +1148,7 @@ python -m pytest
 
 ---
 
-## 当前边界
+## 当前边界 / 非生产级边界说明
 
 当前项目仍是学习型与求职展示型工程项目，不承诺生产级能力。
 
